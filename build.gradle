@@ -1,0 +1,59 @@
+plugins {
+
+    id 'java'
+    id 'com.gradle.plugin-publish' version '0.14.0'
+    id 'java-gradle-plugin'
+}
+
+def buildNumber = System.getenv('BUILD_NUMBER') ? System.getenv('BUILD_NUMBER') : System.getenv('TRAVIS_BUILD_NUMBER') ? System.getenv('TRAVIS_BUILD_NUMBER') : '0'
+project.version = "${project.version}.${buildNumber}".toString()
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+
+    mavenCentral()
+}
+
+dependencies {
+
+    implementation gradleApi()
+}
+
+gradlePlugin {
+
+    plugins {
+    
+        tweedle {
+        
+            id = project.group
+            displayName = project.archiveBaseName
+            description = project.description
+            implementationClass = "${project.group}.${project.archiveBaseName}Plugin"
+        }
+    }
+}
+
+pluginBundle {
+
+    website = project.website
+    vcsUrl = project.source
+    description = project.description
+    tags = gradle_tags.split(', ')
+
+    plugins {
+    
+        plugin {
+        
+            displayName = project.archiveBaseName
+        }
+    }
+    
+    mavenCoordinates {
+    
+        groupId = project.group.toString()
+        artifactId = project.name
+        version = project.version.toString()
+    }
+}
