@@ -5,6 +5,7 @@ plugins {
     id 'java-gradle-plugin'
 }
 
+apply from: 'gradle/property_loader.gradle'
 def buildNumber = System.getenv('BUILD_NUMBER') ? System.getenv('BUILD_NUMBER') : System.getenv('TRAVIS_BUILD_NUMBER') ? System.getenv('TRAVIS_BUILD_NUMBER') : '0'
 project.version = "${project.version}.${buildNumber}".toString()
 
