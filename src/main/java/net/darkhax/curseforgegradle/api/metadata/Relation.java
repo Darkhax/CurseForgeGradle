@@ -10,25 +10,15 @@ public class Relation {
 
     @Expose
     @SerializedName("slug")
-    private String slug;
+    public String slug;
 
     @Expose
     @SerializedName("type")
-    private String type;
+    public String type;
 
     public Relation(String slug, String type) {
 
         this.slug = slug;
         this.type = type;
-    }
-
-    public String getSlug() {
-
-        return this.slug;
-    }
-
-    public String getType() {
-
-        return this.type;
     }
 }
