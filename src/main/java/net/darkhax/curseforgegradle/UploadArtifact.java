@@ -245,8 +245,30 @@ public class UploadArtifact {
      */
     public void addModLoader(Object modloader) {
 
-        final String modloaderString = TaskPublishCurseForge.parseString(modloader);
-        this.gameVersions.add(modloaderString);
+        // Mod loaders are considered game versions for now.
+        addGameVersion(modloader);
+    }
+
+    /**
+     * Marks the file as supporting a given Java version.
+     *
+     * @param javaVersion The java version that is supported.
+     */
+    public void addJavaVersion(Object javaVersion) {
+
+        // Java versions are considered game versions for now.
+        addGameVersion(javaVersion);
+    }
+
+    /**
+     * Marks the file as supporting a given game version.
+     *
+     * @param gameVersion The game version supported by this file.
+     */
+    public void addGameVersion(Object gameVersion) {
+
+        final String versionString = TaskPublishCurseForge.parseString(gameVersion);
+        this.gameVersions.add(versionString);
     }
 
     /**
