@@ -311,6 +311,46 @@ public class UploadArtifact {
     }
 
     /**
+     * Sets the display name of the artifact. This will hide the file name on the website.
+     *
+     * @param displayName The new display name for the file.
+     */
+    public void setDisplayName(Object displayName) {
+
+        this.displayName = TaskPublishCurseForge.parseString(displayName);
+    }
+
+    /**
+     * Sets the changelog for the given artifact.
+     *
+     * @param changelog The changelog for the artifact.
+     */
+    public void setChangelog(Object changelog) {
+
+        this.changelog = TaskPublishCurseForge.parseString(changelog);
+    }
+
+    /**
+     * Sets the type of changelog for the artifact.
+     *
+     * @param changelogType The content type of the changelog.
+     */
+    public void setChangelogType(Object changelogType) {
+
+        this.changelogType = TaskPublishCurseForge.parseString(changelogType);
+    }
+
+    /**
+     * Sets the release type of the artifact.
+     *
+     * @param releaseType The artifact release type.
+     */
+    public void setReleaseType(Object releaseType) {
+
+        this.releaseType = TaskPublishCurseForge.parseString(releaseType);
+    }
+
+    /**
      * Prepares the artifact for being uploaded. This will resolve some configured properties into a format consumable
      * by the API. This is intended for internal use.
      *
