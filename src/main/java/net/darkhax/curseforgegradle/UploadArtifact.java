@@ -188,6 +188,56 @@ public class UploadArtifact {
     }
 
     /**
+     * Marks another project as being incompatible with this file. This will warn users not to use that project with
+     * yours. It may also prevent that project from being installed with a launcher when this file is already
+     * installed.
+     *
+     * @param slug The slug of the incompatible project.
+     */
+    public void addIncompatibility(Object slug) {
+
+        this.addRelation(slug, Constants.INCOMPATIBLE);
+    }
+
+    /**
+     * Marks another project as being required for this file to work properly. This will advise users to download the
+     * required project when they download this file. It may also cause the latest compatible version of that project to
+     * be installed automatically when this file is installed through a launcher.
+     *
+     * @param slug The slug of the required project.
+     */
+    public void addRequirement(Object slug) {
+
+        this.addRelation(slug, Constants.REQUIRED);
+    }
+
+    /**
+     * Marks another project as being embedded within this file.
+     *
+     * @param slug The slug of the embedded project.
+     */
+    public void addEmbedded(Object slug) {
+
+        this.addRelation(slug, Constants.EMBEDDED);
+    }
+
+    public void addTool(Object slug) {
+
+        this.addRelation(slug, Constants.TOOL);
+    }
+
+    /**
+     * Marks another project as being optional. This is used to let users know that this file has special support for
+     * another project or works really well with that project.
+     *
+     * @param slug The slug of the optional project.
+     */
+    public void addOptional(Object slug) {
+
+        this.addRelation(slug, Constants.OPTIONAL);
+    }
+
+    /**
      * Adds a relationship between this artifact and another project on CurseForge. This can have different connotations
      * depending on the game and the platform consuming this data. For example in the case of a Minecraft mod defining a
      * required dependency relationship will cause the official CurseForge launcher to automatically download a valid
@@ -196,32 +246,33 @@ public class UploadArtifact {
      * @param slug The slug of the project to define a relationship with.
      * @param type The type of relationship to define.
      */
-    public void addRelation(String slug, String type) {
+    public void addRelation(Object slug, String type) {
 
-        final String existingRelation = relationships.get(slug);
+        final String slugString = TaskPublishCurseForge.parseString(slug);
+        final String existingRelation = relationships.get(slugString);
 
         if (!Constants.VALID_RELATION_TYPES.contains(type)) {
 
-            this.log.warn("Unknown relation type {} was defined for project {}.", type, slug);
+            this.log.warn("Unknown relation type {} was defined for project {}.", type, slugString);
         }
 
         if (existingRelation != null) {
 
             if (type == null) {
 
-                this.relationships.remove(slug);
-                this.log.warn("Relation with project {} has been removed.", slug);
+                this.relationships.remove(slugString);
+                this.log.warn("Relation with project {} has been removed.", slugString);
             }
 
             else {
 
-                this.log.warn("Changing relation type for project {} from {} to {}.", slug, existingRelation, type);
+                this.log.warn("Changing relation type for project {} from {} to {}.", slugString, existingRelation, type);
             }
         }
 
         if (type != null) {
 
-            this.relationships.put(slug, type);
+            this.relationships.put(slugString, type);
         }
     }
 
