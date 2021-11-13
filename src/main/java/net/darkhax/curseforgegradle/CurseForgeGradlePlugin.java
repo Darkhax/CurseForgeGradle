@@ -25,6 +25,7 @@ public class CurseForgeGradlePlugin implements Plugin<Project> {
      * @param urlString The URL as a string.
      * @param token     An optional API token.
      * @return The HTTP reader.
+     * @throws IOException This exception will be raised if the connection was rejected or could not be established.
      */
     public static Reader fetch(String urlString, @Nullable String token) throws IOException {
 
