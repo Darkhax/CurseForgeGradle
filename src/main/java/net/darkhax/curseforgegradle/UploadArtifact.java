@@ -238,6 +238,18 @@ public class UploadArtifact {
     }
 
     /**
+     * Marks the file as supporting a given modloader. This is primarily used by Minecraft for the Forge, Fabric, and
+     * Rift loaders.
+     *
+     * @param modloader The modloader that is supported by this file.
+     */
+    public void addModLoader(Object modloader) {
+
+        final String modloaderString = TaskPublishCurseForge.parseString(modloader);
+        this.gameVersions.add(modloaderString);
+    }
+
+    /**
      * Adds a relationship between this artifact and another project on CurseForge. This can have different connotations
      * depending on the game and the platform consuming this data. For example in the case of a Minecraft mod defining a
      * required dependency relationship will cause the official CurseForge launcher to automatically download a valid
