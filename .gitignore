@@ -1,3 +1,9 @@
 #Gradle
 .gradle/
 build/
+
+# Idea
+.idea/
+
+# Temp
+/examples
