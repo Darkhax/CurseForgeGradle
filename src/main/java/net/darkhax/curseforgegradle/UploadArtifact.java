@@ -8,6 +8,8 @@ import net.darkhax.curseforgegradle.api.upload.ResponseSuccessful;
 import net.darkhax.curseforgegradle.api.versions.GameVersions;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.CookieSpecs;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
@@ -413,13 +415,12 @@ public class UploadArtifact {
      */
     public final void beginUpload(String endpoint, String token) {
 
-        final HttpClient webClient = HttpClientBuilder.create().setUserAgent("CurseForgeGradle").build();
+        final HttpClient webClient = HttpClientBuilder.create().setDefaultRequestConfig(RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build()).setUserAgent("CurseForgeGradle").build();
 
         final MultipartEntityBuilder requestEntity = MultipartEntityBuilder.create();
         requestEntity.addTextBody("metadata", Constants.GSON.toJson(this.createMetadata()), ContentType.APPLICATION_JSON);
         requestEntity.addBinaryBody("file", this.uploadFile);
 
-        this.log.info("JSON DATA: " + Constants.GSON.toJson(this.createMetadata()), ContentType.APPLICATION_JSON);
         final HttpPost request = new HttpPost(endpoint + "/api/projects/" + this.projectId + "/upload-file");
         request.addHeader("X-Api-Token", token);
         request.setEntity(requestEntity.build());
