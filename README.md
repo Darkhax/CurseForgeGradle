@@ -1,2 +1,3 @@
 # CurseForgeGradle
-A Gradle plugin for uploading files to CurseForge.
+
+A Gradle plugin for publishing files to CurseForge.
