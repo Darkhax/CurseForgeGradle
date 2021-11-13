@@ -1,0 +1,10 @@
+modLoader="javafml" #mandatory
+loaderVersion="[37,)"
+license="All rights reserved"
+[[mods]]
+modId="examplemod"
+version="${file.jarVersion}"
+displayName="Test"
+description='''
+Test
+'''
