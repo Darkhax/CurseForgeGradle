@@ -135,9 +135,8 @@ public class UploadArtifact {
      * Additional meta tags like Java version or Loader version are also considered game versions by CurseForge and are
      * added here.
      * <p>
-     * When a sub file is created using {@link #withAdditionalFile(Object)} it will inherit the current game versions.
-     * This can still be changed independently after creation.
-     * TODO auto detection
+     * Sub files automatically inherit the game versions of their parent file. This is a hard limit enforced by the
+     * CurseForge API and can not be changed after the fact.
      */
     public Set<String> gameVersions = new HashSet<>();
 
@@ -362,7 +361,7 @@ public class UploadArtifact {
 
             this.log.warn("Release type {} is not recognized.", releaseTypeString);
         }
-        
+
         this.releaseType = TaskPublishCurseForge.parseString(releaseType);
     }
 
