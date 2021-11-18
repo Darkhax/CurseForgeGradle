@@ -269,6 +269,13 @@ public class UploadArtifact {
     public void addGameVersion(Object gameVersion) {
 
         final String versionString = TaskPublishCurseForge.parseString(gameVersion);
+
+        if (this.parent != null) {
+
+            this.log.error("Attempted to set the version of an additional file. This is not allowed! version={}", versionString);
+            throw new GradleException("Sub files can not have their own versions!");
+        }
+
         this.gameVersions.add(versionString);
     }
 
