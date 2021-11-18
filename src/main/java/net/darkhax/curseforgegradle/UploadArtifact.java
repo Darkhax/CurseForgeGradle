@@ -339,7 +339,14 @@ public class UploadArtifact {
      */
     public void setChangelogType(Object changelogType) {
 
-        this.changelogType = TaskPublishCurseForge.parseString(changelogType);
+        final String changelogTypeString = TaskPublishCurseForge.parseString(changelogType);
+
+        if (!Constants.VALID_CHANGELOG_TYPES.contains(changelogTypeString)) {
+
+            this.log.warn("Changelog type {} is not recognized as valid.", changelogTypeString);
+        }
+
+        this.changelogType = changelogTypeString;
     }
 
     /**
@@ -349,6 +356,13 @@ public class UploadArtifact {
      */
     public void setReleaseType(Object releaseType) {
 
+        final String releaseTypeString = TaskPublishCurseForge.parseString(releaseType);
+
+        if (!Constants.VALID_RELEASE_TYPES.contains(releaseTypeString)) {
+
+            this.log.warn("Release type {} is not recognized.", releaseTypeString);
+        }
+        
         this.releaseType = TaskPublishCurseForge.parseString(releaseType);
     }
 
