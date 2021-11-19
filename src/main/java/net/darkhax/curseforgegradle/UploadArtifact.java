@@ -15,6 +15,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.gradle.api.GradleException;
+import org.gradle.api.Task;
 import org.gradle.api.logging.Logger;
 
 import javax.annotation.Nullable;
@@ -113,7 +114,7 @@ public class UploadArtifact {
      * When a sub file is created using {@link #withAdditionalFile(Object)} it will inherit the current changelog value.
      * This can still be changed independently after creation.
      */
-    public String changelog = null;
+    public Object changelog = null;
 
     /**
      * The type of changelog being defined. CurseForge supports various formats such as markdown and HTML however the
@@ -122,13 +123,13 @@ public class UploadArtifact {
      * When a sub file is created using {@link #withAdditionalFile(Object)} it will inherit the current changelog type.
      * This can still be changed independently after creation.
      */
-    public String changelogType = Constants.CHANGELOG_TEXT;
+    public Object changelogType = Constants.CHANGELOG_TEXT;
 
     /**
      * The display name for the file on CurseForge. When defined this will hide the name of the file on CurseForge. The
      * use of this property is generally discouraged.
      */
-    public String displayName = null;
+    public Object displayName = null;
 
     /**
      * A set of game versions associated with the artifact. At least one game version is required to upload an artifact.
@@ -147,7 +148,7 @@ public class UploadArtifact {
      * When a sub file is created using {@link #withAdditionalFile(Object)} it will inherit the current release type.
      * This can still be changed independently after creation.
      */
-    public String releaseType = Constants.RELEASE_TYPE_ALPHA;
+    public Object releaseType = Constants.RELEASE_TYPE_ALPHA;
 
     public UploadArtifact(Object artifact, Long projectId, Logger log, @Nullable UploadArtifact parent) {
 
@@ -288,19 +289,20 @@ public class UploadArtifact {
      * @param slug The slug of the project to define a relationship with.
      * @param type The type of relationship to define.
      */
-    public void addRelation(Object slug, String type) {
+    public void addRelation(Object slug, Object type) {
 
         final String slugString = TaskPublishCurseForge.parseString(slug);
         final String existingRelation = relationships.get(slugString);
+        final String typeString = TaskPublishCurseForge.parseString(type);
 
-        if (!Constants.VALID_RELATION_TYPES.contains(type)) {
+        if (!Constants.VALID_RELATION_TYPES.contains(typeString)) {
 
-            this.log.warn("Unknown relation type {} was defined for project {}.", type, slugString);
+            this.log.warn("Unknown relation type {} was defined for project {}.", typeString, slugString);
         }
 
         if (existingRelation != null) {
 
-            if (type == null) {
+            if (typeString == null) {
 
                 this.relationships.remove(slugString);
                 this.log.warn("Relation with project {} has been removed.", slugString);
@@ -308,68 +310,14 @@ public class UploadArtifact {
 
             else {
 
-                this.log.warn("Changing relation type for project {} from {} to {}.", slugString, existingRelation, type);
+                this.log.warn("Changing relation type for project {} from {} to {}.", slugString, existingRelation, typeString);
             }
         }
 
-        if (type != null) {
+        if (typeString != null) {
 
-            this.relationships.put(slugString, type);
+            this.relationships.put(slugString, typeString);
         }
-    }
-
-    /**
-     * Sets the display name of the artifact. This will hide the file name on the website.
-     *
-     * @param displayName The new display name for the file.
-     */
-    public void setDisplayName(Object displayName) {
-
-        this.displayName = TaskPublishCurseForge.parseString(displayName);
-    }
-
-    /**
-     * Sets the changelog for the given artifact.
-     *
-     * @param changelog The changelog for the artifact.
-     */
-    public void setChangelog(Object changelog) {
-
-        this.changelog = TaskPublishCurseForge.parseString(changelog);
-    }
-
-    /**
-     * Sets the type of changelog for the artifact.
-     *
-     * @param changelogType The content type of the changelog.
-     */
-    public void setChangelogType(Object changelogType) {
-
-        final String changelogTypeString = TaskPublishCurseForge.parseString(changelogType);
-
-        if (!Constants.VALID_CHANGELOG_TYPES.contains(changelogTypeString)) {
-
-            this.log.warn("Changelog type {} is not recognized as valid.", changelogTypeString);
-        }
-
-        this.changelogType = changelogTypeString;
-    }
-
-    /**
-     * Sets the release type of the artifact.
-     *
-     * @param releaseType The artifact release type.
-     */
-    public void setReleaseType(Object releaseType) {
-
-        final String releaseTypeString = TaskPublishCurseForge.parseString(releaseType);
-
-        if (!Constants.VALID_RELEASE_TYPES.contains(releaseTypeString)) {
-
-            this.log.warn("Release type {} is not recognized.", releaseTypeString);
-        }
-
-        this.releaseType = TaskPublishCurseForge.parseString(releaseType);
     }
 
     /**
@@ -424,6 +372,17 @@ public class UploadArtifact {
 
         // Resolve game versions from strings to IDs using the results from the CurseForge API.
         this.uploadVersions = validGameVersions.resolveVersions(this.gameVersions);
+
+        // Validate types
+        if (!Constants.VALID_CHANGELOG_TYPES.contains(TaskPublishCurseForge.parseString(this.changelogType))) {
+
+            this.log.warn("Changelog type {} is not recognized as valid.", changelogType);
+        }
+
+        if (!Constants.VALID_RELEASE_TYPES.contains(TaskPublishCurseForge.parseString(this.releaseType))) {
+
+            this.log.warn("Release type {} is not recognized.", releaseType);
+        }
     }
 
     /**
@@ -506,10 +465,10 @@ public class UploadArtifact {
     private Metadata createMetadata() {
 
         final Metadata request = new Metadata();
-        request.changelog = this.changelog;
-        request.changelogType = this.changelogType;
-        request.displayName = this.displayName;
-        request.releaseType = this.releaseType;
+        request.changelog = TaskPublishCurseForge.parseString(this.changelog);
+        request.changelogType = TaskPublishCurseForge.parseString(this.changelogType);
+        request.displayName = TaskPublishCurseForge.parseString(this.displayName);
+        request.releaseType = TaskPublishCurseForge.parseString(this.releaseType);
         request.relations = this.uploadRelations;
 
         // If the parent is null this is a parent artifact.

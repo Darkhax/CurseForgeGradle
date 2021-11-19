@@ -45,13 +45,13 @@ public class TaskPublishCurseForge extends DefaultTask {
      * The game specific API endpoint. This is used to retrieve lists of valid versions for a game and to help files get
      * uploaded to the right game.
      */
-    public String apiEndpoint = "https://minecraft.curseforge.com";
+    public Object apiEndpoint = "https://minecraft.curseforge.com";
 
     /**
      * The API token used to publish files on your behalf. This token must have the correct project permissions for the
      * files to be published. These tokens can be generated here: https://authors.curseforge.com/account/api-tokens
      */
-    public String apiToken;
+    public Object apiToken;
 
     public TaskPublishCurseForge() {
 
@@ -80,6 +80,11 @@ public class TaskPublishCurseForge extends DefaultTask {
         final UploadArtifact artifact = new UploadArtifact(toUpload, parseLong(projectId), this.log, null);
         this.uploadArtifacts.add(artifact);
         return artifact;
+    }
+
+    public void disableVersionDetection() {
+
+        this.versionDetector.isEnabled = false;
     }
 
     /**
@@ -126,8 +131,8 @@ public class TaskPublishCurseForge extends DefaultTask {
         this.log.debug("Task configured to connect to {}", this.apiEndpoint);
 
         // Request game version data from the API. This is used to map version slugs to API version IDs.
-        this.validGameVersions = new GameVersions(this.apiEndpoint, this.getProject().getDisplayName(), this.getName());
-        this.validGameVersions.refresh(this.apiToken);
+        this.validGameVersions = new GameVersions(parseString(this.apiEndpoint), this.getProject().getDisplayName(), this.getName());
+        this.validGameVersions.refresh(parseString(this.apiToken));
 
         // Handle auto version detection.
         if (this.versionDetector.isEnabled) {
@@ -149,19 +154,22 @@ public class TaskPublishCurseForge extends DefaultTask {
      */
     private void publish() {
 
+        final String tokenString = parseString(this.apiToken);
+        final String endpointString = parseString(this.apiEndpoint);
+
         // Each artifact goes through two steps. The prepare step is used to process the artifact configuration into
         // a format accepted by the API. The second step is the upload step which posts an upload request to the API
         // and processes the response.
         for (UploadArtifact artifact : this.uploadArtifacts) {
 
             artifact.prepareForUpload(this.validGameVersions, this::resolveFile);
-            artifact.beginUpload(this.apiEndpoint, this.apiToken);
+            artifact.beginUpload(endpointString, tokenString);
 
             // Handle additional files, sometimes called sub files or child files.
             for (UploadArtifact childArtifact : artifact.getAdditionalArtifacts()) {
 
                 childArtifact.prepareForUpload(this.validGameVersions, this::resolveFile);
-                childArtifact.beginUpload(this.apiEndpoint, this.apiToken);
+                childArtifact.beginUpload(endpointString, tokenString);
             }
         }
     }
