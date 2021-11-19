@@ -3,6 +3,7 @@ package net.darkhax.curseforgegradle;
 import net.darkhax.curseforgegradle.api.versions.GameVersions;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
+import org.gradle.api.Task;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.TaskAction;
@@ -60,7 +61,12 @@ public class TaskPublishCurseForge extends DefaultTask {
 
         // Ensure publishing takes place after the build task has completed. This is required
         // in some environments such as those with parallel task execution enabled.
-        this.mustRunAfter(this.getProject().getTasks().getByName("build"));
+        final Task buildTask = this.getProject().getTasks().findByName("build");
+
+        if (buildTask != null) {
+
+            this.mustRunAfter(this.getProject().getTasks().getByName("build"));
+        }
     }
 
     /**
