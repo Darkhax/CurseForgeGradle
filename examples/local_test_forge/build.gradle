@@ -52,9 +52,6 @@ task publishCurseForge(type: TaskPublishCurseForge) {
     mainFile.setReleaseType('beta')
     mainFile.setChangelog('This is a test file. Please ignore it. The mod does nothing.')
     mainFile.setChangelogType('markdown')
-    mainFile.addGameVersion('1.0.0')
-    mainFile.addJavaVersion('Java 6')
-    mainFile.addModLoader('Rift')
     mainFile.addIncompatibility('bookshelf')
     
     // The sources JAR

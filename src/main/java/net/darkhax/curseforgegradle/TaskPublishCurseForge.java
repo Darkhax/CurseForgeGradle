@@ -29,6 +29,12 @@ public class TaskPublishCurseForge extends DefaultTask {
     private GameVersions validGameVersions;
 
     /**
+     * Handles the automatic discovery of game version tags from variables in the Gradle environment. If this is not
+     * disabled detected versions will be applied in {@link #initialize()}.
+     */
+    private final VersionDetector versionDetector;
+
+    /**
      * An internal list of all top-level artifacts that this task should publish. New artifacts are added to this list
      * by using {@link #upload(Object, Object)} during the task configuration phase. These artifacts will be published
      * to CurseForge during the {@link #publish()} step.
@@ -50,6 +56,7 @@ public class TaskPublishCurseForge extends DefaultTask {
     public TaskPublishCurseForge() {
 
         this.log = Logging.getLogger("CurseForgeGradle/" + this.getProject().getDisplayName() + "/" + this.getName());
+        this.versionDetector = new VersionDetector(this.getProject());
 
         // Ensure publishing takes place after the build task has completed. This is required
         // in some environments such as those with parallel task execution enabled.
@@ -121,6 +128,20 @@ public class TaskPublishCurseForge extends DefaultTask {
         // Request game version data from the API. This is used to map version slugs to API version IDs.
         this.validGameVersions = new GameVersions(this.apiEndpoint, this.getProject().getDisplayName(), this.getName());
         this.validGameVersions.refresh(this.apiToken);
+
+        // Handle auto version detection.
+        if (this.versionDetector.isEnabled) {
+
+            this.versionDetector.detectVersions();
+
+            for (String detectedVersion : this.versionDetector.getDetectedVersions()) {
+
+                for (UploadArtifact artifact : this.uploadArtifacts) {
+
+                    artifact.addGameVersion(detectedVersion);
+                }
+            }
+        }
     }
 
     /**
@@ -201,6 +222,6 @@ public class TaskPublishCurseForge extends DefaultTask {
      */
     public static String parseString(Object obj) {
 
-        return obj.toString();
+        return obj != null ? obj.toString() : null;
     }
 }
