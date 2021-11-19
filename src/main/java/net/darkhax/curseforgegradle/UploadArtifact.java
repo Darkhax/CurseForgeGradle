@@ -469,7 +469,12 @@ public class UploadArtifact {
         request.changelogType = TaskPublishCurseForge.parseString(this.changelogType);
         request.displayName = TaskPublishCurseForge.parseString(this.displayName);
         request.releaseType = TaskPublishCurseForge.parseString(this.releaseType);
-        request.relations = this.uploadRelations;
+
+        // Only set the relations if they actually exist. Curse doesn't like empty arrays here :upside_down:
+        if (!this.uploadRelations.getRelations().isEmpty()) {
+
+            request.relations = this.uploadRelations;
+        }
 
         // If the parent is null this is a parent artifact.
         if (this.parent == null) {
@@ -490,7 +495,7 @@ public class UploadArtifact {
             // file. The curseFileId is null until the parent has been published.
             request.parentFileID = this.parent.curseFileId;
         }
-
+        
         return request;
     }
 }

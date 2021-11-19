@@ -39,5 +39,5 @@ public class Metadata {
 
     @Expose
     @SerializedName("relations") // Optional
-    public ProjectRelations relations = new ProjectRelations();
+    public ProjectRelations relations = null;
 }
