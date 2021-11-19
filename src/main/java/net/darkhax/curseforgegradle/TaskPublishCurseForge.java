@@ -56,7 +56,7 @@ public class TaskPublishCurseForge extends DefaultTask {
     public TaskPublishCurseForge() {
 
         this.log = Logging.getLogger("CurseForgeGradle/" + this.getProject().getDisplayName() + "/" + this.getName());
-        this.versionDetector = new VersionDetector(this.getProject());
+        this.versionDetector = new VersionDetector(this.getProject(), this.log);
 
         // Ensure publishing takes place after the build task has completed. This is required
         // in some environments such as those with parallel task execution enabled.
