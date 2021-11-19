@@ -30,9 +30,9 @@ dependencies {
 gradlePlugin {
 
     plugins {
-    
+
         curseforgegradle {
-        
+
             id = project.group
             displayName = project.archiveBaseName
             description = project.description
@@ -49,15 +49,15 @@ pluginBundle {
     tags = gradle_tags.split(', ')
 
     plugins {
-    
+
         curseforgegradle {
-        
+
             displayName = project.archiveBaseName
         }
     }
-    
+
     mavenCoordinates {
-    
+
         groupId = project.group.toString()
         artifactId = project.name
         version = project.version.toString()

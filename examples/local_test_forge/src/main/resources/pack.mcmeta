@@ -1,1 +1,6 @@
-{"pack":{"description":"test","pack_format":7}}
+{
+  "pack": {
+    "description": "test",
+    "pack_format": 7
+  }
+}
