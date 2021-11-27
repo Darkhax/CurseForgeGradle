@@ -48,12 +48,3 @@ subprojects {
         it.options.release = 16
     }
 }
-
-task publishCurseForgeAll() {
-
-    description = 'publishes all projects to CurseForge.'
-    
-    dependsOn ':Common:publishCurseForge'
-    dependsOn ':Forge:publishCurseForge'
-    dependsOn ':Fabric:publishCurseForge'
-}
