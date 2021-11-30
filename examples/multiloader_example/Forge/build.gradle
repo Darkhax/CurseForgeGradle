@@ -21,7 +21,7 @@ archivesBaseName = "${mod_name}-forge-${minecraft_version}"
 minecraft {
 
     mappings channel: 'official', version: minecraft_version
-    
+
     if (project.hasProperty('forge_ats_enabled') && project.findProperty('forge_ats_enabled').toBoolean()) {
         // This location is hardcoded in Forge and can not be changed.
         // https://github.com/MinecraftForge/MinecraftForge/blob/be1698bb1554f9c8fa2f58e32b9ab70bc4385e60/fmlloader/src/main/java/net/minecraftforge/fml/loading/moddiscovery/ModFile.java#L123
@@ -103,11 +103,11 @@ publishing {
 task publishCurseForge(type: net.darkhax.curseforgegradle.TaskPublishCurseForge) {
 
     description = 'publishes the commob build to CurseForge.'
-    
+
     apiToken = curseforgegradle_testtoken
-    
+
     def mainFile = upload(537663, jar)
-    mainFile.changelog = 'This is a test file. It was compiled against Forge.'    
+    mainFile.changelog = 'This is a test file. It was compiled against Forge.'
     def sourcesFile = mainFile.withAdditionalFile(sourcesJar)
     def javadocFile = mainFile.withAdditionalFile(javadocJar)
 }

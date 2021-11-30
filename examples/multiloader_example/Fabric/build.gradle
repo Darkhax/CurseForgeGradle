@@ -71,11 +71,11 @@ publishing {
 task publishCurseForge(type: net.darkhax.curseforgegradle.TaskPublishCurseForge) {
 
     description = 'publishes the commob build to CurseForge.'
-    
+
     apiToken = curseforgegradle_testtoken
-    
+
     def mainFile = upload(537663, file("${project.buildDir}/libs/${archivesBaseName}-${version}.jar"))
-    mainFile.changelog = 'This is a test file. It was compiled against Fabric.'    
+    mainFile.changelog = 'This is a test file. It was compiled against Fabric.'
     def sourcesFile = mainFile.withAdditionalFile(sourcesJar)
     def javadocFile = mainFile.withAdditionalFile(javadocJar)
 }
