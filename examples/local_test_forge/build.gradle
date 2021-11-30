@@ -52,6 +52,7 @@ task publishCurseForge(type: net.darkhax.curseforgegradle.TaskPublishCurseForge)
     
     // The sources JAR
     def sourcesFile = mainFile.withAdditionalFile(sourcesJar)
+    sourcesFile.changelog = file('changelog.md')
     
     // The JavaDoc JAR
     def javadocFile = mainFile.withAdditionalFile(javadocJar)
