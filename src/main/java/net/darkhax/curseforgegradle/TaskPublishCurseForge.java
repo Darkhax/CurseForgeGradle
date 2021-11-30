@@ -16,6 +16,10 @@ import java.nio.file.Files;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * A Gradle task that can publish multiple files to CurseForge. A project can define any number of these tasks, and any
+ * given task can be responsible for publishing any number of files to any number of projects.
+ */
 public class TaskPublishCurseForge extends DefaultTask {
 
     /**
@@ -56,6 +60,10 @@ public class TaskPublishCurseForge extends DefaultTask {
      */
     public Object apiToken;
 
+    /**
+     * This task should not be constructed manually. It will be constructed dynamically by Gradle when a user defines
+     * the task. Code inside the constructor will be executed before the user configuration.
+     */
     public TaskPublishCurseForge() {
 
         this.log = Logging.getLogger("CurseForgeGradle/" + this.getProject().getDisplayName() + "/" + this.getName());
@@ -90,6 +98,9 @@ public class TaskPublishCurseForge extends DefaultTask {
         return artifact;
     }
 
+    /**
+     * Disables automatic version detection for all artifacts published through the current task.
+     */
     public void disableVersionDetection() {
 
         this.versionDetector.isEnabled = false;

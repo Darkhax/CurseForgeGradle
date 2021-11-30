@@ -35,7 +35,15 @@ public final class VersionDetector {
      */
     public boolean isEnabled = true;
 
-    public VersionDetector(Project project, Logger log) {
+    /**
+     * The version detector should not be constructed manually. It is automatically constructed when the CurseForge
+     * publish task is defined. Each task will have its own instance of the version detector.
+     *
+     * @param project The project associated with this version detector. This is primarily used to check applied plugins
+     *                and build properties.
+     * @param log     The log output for debug information. This is taken from the task that owns this instance.
+     */
+    VersionDetector(Project project, Logger log) {
 
         this.project = project;
         this.log = log;

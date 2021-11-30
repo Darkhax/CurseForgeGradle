@@ -8,15 +8,27 @@ import com.google.gson.annotations.SerializedName;
  */
 public class Relation {
 
+    /**
+     * The slug of the project.
+     */
     @Expose
     @SerializedName("slug")
     public String slug;
 
+    /**
+     * The type of relationship.
+     */
     @Expose
     @SerializedName("type")
     public String type;
 
-    public Relation(String slug, String type) {
+    /**
+     * Creates a new project relationship.
+     *
+     * @param slug The slug of the project.
+     * @param type The type of relationship.
+     */
+    protected Relation(String slug, String type) {
 
         this.slug = slug;
         this.type = type;

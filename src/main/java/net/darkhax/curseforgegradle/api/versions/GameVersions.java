@@ -19,14 +19,44 @@ import java.util.Set;
  */
 public final class GameVersions {
 
+    /**
+     * An internal logger unique to each instance of this class.
+     */
     private final Logger log;
+
+    /**
+     * The URL for the endpoint that lists every game version.
+     */
     private final String versionsEndpoint;
+
+    /**
+     * The URL for the endpoint that lists every game version type.
+     */
     private final String versionTypesEndpoint;
 
+    /**
+     * A set of version IDs that are considered valid for this type of project.
+     */
     private final Set<Long> validVersionTypes = new HashSet<>();
+
+    /**
+     * A map of valid version IDs by name.
+     */
     private final Map<String, Version> versionsByName = new HashMap<>();
+
+    /**
+     * A map of valid version IDs by slug.
+     */
     private final Map<String, Version> versionsBySlug = new HashMap<>();
 
+    /**
+     * Users should not be constructing this themselves. Each instance of this class should be unique to the task that
+     * spawned it.
+     *
+     * @param endpoint    The base URL for the API.
+     * @param projectName The name of the project uploading a file. This is used for debug logging.
+     * @param taskName    The name of the task uploading a file. This is used for debug logging.
+     */
     public GameVersions(String endpoint, String projectName, String taskName) {
 
         this.versionsEndpoint = endpoint + "/api/game/versions";

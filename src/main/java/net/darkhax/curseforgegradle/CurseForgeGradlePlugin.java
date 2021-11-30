@@ -11,6 +11,10 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.zip.GZIPInputStream;
 
+/**
+ * The main plugin class that gets applied by user scripts. This plugin is entirely task based and does not need to be
+ * applied. This class primarily exists as a formality.
+ */
 public class CurseForgeGradlePlugin implements Plugin<Project> {
 
     @Override

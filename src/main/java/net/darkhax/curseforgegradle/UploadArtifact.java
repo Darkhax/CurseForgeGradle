@@ -15,7 +15,6 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.gradle.api.GradleException;
-import org.gradle.api.Task;
 import org.gradle.api.logging.Logger;
 
 import javax.annotation.Nullable;
@@ -32,6 +31,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
+/**
+ * This class defines the script-time representation of an artifact being published to CurseForge. Users will directly
+ * configure this object through their script when defining a new file to upload.
+ */
 public class UploadArtifact {
 
     // --- INTERNAL PROPERTIES --- //
@@ -150,7 +153,18 @@ public class UploadArtifact {
      */
     public Object releaseType = Constants.RELEASE_TYPE_ALPHA;
 
-    public UploadArtifact(Object artifact, Long projectId, Logger log, @Nullable UploadArtifact parent) {
+    /**
+     * These are created using a helper method from TaskPublishCurseForge. Users should never construct this manually.
+     *
+     * @param artifact  The artifact to publish. This is not necessarily a file and may not be valid until later in the
+     *                  build process.
+     * @param projectId The ID of the project to publish this artifact to.
+     * @param log       A logger used to help with debugging. This is taken from the Task that define the artifact and
+     *                  is unique to each task.
+     * @param parent    An optional parent artifact. When defined the current artifact is treated as a
+     *                  child/additional/sub file.
+     */
+    protected UploadArtifact(Object artifact, Long projectId, Logger log, @Nullable UploadArtifact parent) {
 
         this.log = log;
         this.artifact = artifact;
@@ -198,7 +212,7 @@ public class UploadArtifact {
      */
     public void addIncompatibility(Object slug) {
 
-        this.addRelation(slug, Constants.INCOMPATIBLE);
+        this.addRelation(slug, Constants.RELATION_INCOMPATIBLE);
     }
 
     /**
@@ -210,7 +224,7 @@ public class UploadArtifact {
      */
     public void addRequirement(Object slug) {
 
-        this.addRelation(slug, Constants.REQUIRED);
+        this.addRelation(slug, Constants.RELATION_REQUIRED);
     }
 
     /**
@@ -220,12 +234,17 @@ public class UploadArtifact {
      */
     public void addEmbedded(Object slug) {
 
-        this.addRelation(slug, Constants.EMBEDDED);
+        this.addRelation(slug, Constants.RELATION_EMBEDDED);
     }
 
+    /**
+     * Marks another project as being a tool for this file. Nobody seems to know what this means.
+     *
+     * @param slug The slug of the tool project.
+     */
     public void addTool(Object slug) {
 
-        this.addRelation(slug, Constants.TOOL);
+        this.addRelation(slug, Constants.RELATION_TOOL);
     }
 
     /**
@@ -236,7 +255,7 @@ public class UploadArtifact {
      */
     public void addOptional(Object slug) {
 
-        this.addRelation(slug, Constants.OPTIONAL);
+        this.addRelation(slug, Constants.RELATION_OPTIONAL);
     }
 
     /**
@@ -495,7 +514,7 @@ public class UploadArtifact {
             // file. The curseFileId is null until the parent has been published.
             request.parentFileID = this.parent.curseFileId;
         }
-        
+
         return request;
     }
 }
