@@ -11,6 +11,8 @@ import org.gradle.api.tasks.bundling.AbstractArchiveTask;
 
 import javax.annotation.Nullable;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -235,6 +237,18 @@ public class TaskPublishCurseForge extends DefaultTask {
      * @return The resolved value.
      */
     public static String parseString(Object obj) {
+
+        if (obj instanceof File) {
+
+            try {
+                return new String(Files.readAllBytes(((File) obj).toPath()));
+            }
+
+            catch (IOException e) {
+
+                throw new GradleException("Could not parse File " + ((File) obj).getPath() + " as string.", e);
+            }
+        }
 
         return obj != null ? obj.toString() : null;
     }
