@@ -517,4 +517,9 @@ public class UploadArtifact {
 
         return request;
     }
+
+    @Nullable
+    public Long getCurseFileId() {
+        return curseFileId;
+    }
 }
