@@ -62,6 +62,8 @@ public final class VersionDetector {
             detectProperty("MC_VERSION");
             detectProperty("minecraft_version");
             detectProperty("mc_version");
+            detectProperty("mcVersion");
+            detectProperty("minecraftVersion");
         }
     }
 
