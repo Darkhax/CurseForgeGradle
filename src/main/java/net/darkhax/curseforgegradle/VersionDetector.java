@@ -59,6 +59,7 @@ public final class VersionDetector {
             // Minecraft support
             detectPlugin("net.minecraftforge.gradle", "Forge");
             detectPlugin("fabric-loom", "Fabric");
+            detectPlugin("org.quiltmc.loom", "Quilt");
             detectProperty("MC_VERSION");
             detectProperty("minecraft_version");
             detectProperty("mc_version");
