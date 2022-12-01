@@ -1,6 +1,7 @@
 package net.darkhax.curseforgegradle;
 
 import net.darkhax.curseforgegradle.api.versions.GameVersions;
+import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.Task;
@@ -95,6 +96,26 @@ public class TaskPublishCurseForge extends DefaultTask {
 
         final UploadArtifact artifact = new UploadArtifact(toUpload, parseLong(projectId), this.log, null);
         this.uploadArtifacts.add(artifact);
+        return artifact;
+    }
+
+    /**
+     * Creates a new main level artifact that the plugin will attempt to publish during the {@link #publish()} step.
+     * This method requires the minimum amount of information to define an artifact. Further configuration including
+     * defining additional sub files can be done by modifying the returned artifact instance.
+     *
+     * @param projectId The CurseForge project ID to publish this artifact to.
+     * @param toUpload  The artifact to upload when this artifact is published. This can accept files, archive tasks,
+     *                  and several other types of files. The resolution of this is handled by {@link
+     *                  #resolveFile(Object)}.
+     * @param action    The {@link Action} to apply before returning the artifact.
+     * @return An object that represents the artifact being published. This can be used to perform additional
+     * configuration such as defining a changelog.
+     */
+    public UploadArtifact upload(Object projectId, Object toUpload, Action<UploadArtifact> action) {
+
+        final UploadArtifact artifact = upload(projectId, toUpload);
+        action.execute(artifact);
         return artifact;
     }
 
