@@ -118,8 +118,7 @@ public class TaskPublishCurseForge extends DefaultTask {
      *
      * @param projectId The CurseForge project ID to publish this artifact to.
      * @param toUpload  The artifact to upload when this artifact is published. This can accept files, archive tasks,
-     *                  and several other types of files. The resolution of this is handled by {@link
-     *                  #resolveFile(Object)}.
+     *                  and several other types of files. The resolution of this is handled by {@link FileCollection}.
      * @param action    The {@link Action} to apply before returning the artifact.
      * @return An object that represents the artifact being published. This can be used to perform additional
      * configuration such as defining a changelog.
@@ -189,7 +188,7 @@ public class TaskPublishCurseForge extends DefaultTask {
         // Handle auto version detection.
         if (this.versionDetector.isEnabled) {
 
-            this.versionDetector.detectVersions();
+            this.versionDetector.detectVersions(this.validGameVersions);
 
             for (String detectedVersion : this.versionDetector.getDetectedVersions()) {
 
