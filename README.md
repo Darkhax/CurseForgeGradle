@@ -57,7 +57,7 @@ task publishCurseForge(type: net.darkhax.curseforgegradle.TaskPublishCurseForge)
     // return a UploadArtifact object that can be used to further configure the
     // file. 
     def mainFile = upload(projectId, jar)
-    mainFile.setChangelog('The changelog string for this file.')
+    mainFile.changelog = 'The changelog string for this file.'
 }
 ```
 
