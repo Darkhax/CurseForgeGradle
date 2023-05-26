@@ -15,7 +15,12 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.gradle.api.GradleException;
+import org.gradle.api.file.ConfigurableFileCollection;
+import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
+import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.Nested;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -29,7 +34,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 
 /**
  * This class defines the script-time representation of an artifact being published to CurseForge. Users will directly
@@ -38,6 +42,8 @@ import java.util.function.Function;
 public class UploadArtifact {
 
     // --- INTERNAL PROPERTIES --- //
+
+    private final ObjectFactory objectFactory;
 
     /**
      * An internal logger used to log information about the upload process. This logger includes the name of the project
@@ -61,13 +67,13 @@ public class UploadArtifact {
     /**
      * An internal reference to the artifact being uploaded. This reference is held as an object to account for the
      * various ways files can be represented in a Gradle project. This will be resolved to a NIO File reference during
-     * the {@link #prepareForUpload(GameVersions, Function)} step. The result of which is held by {@link #uploadFile}.
+     * the {@link #prepareForUpload(GameVersions)} step. The result of which is held by {@link #uploadFile}.
      */
-    private final Object artifact;
+    private final FileCollection artifact;
 
     /**
      * An internal reference to the upload artifact as a NIO File. This is null until the {@link
-     * #prepareForUpload(GameVersions, Function)} step has happened.
+     * #prepareForUpload(GameVersions)} step has happened.
      */
     @Nullable
     private File uploadFile = null;
@@ -82,7 +88,7 @@ public class UploadArtifact {
     /**
      * An internal set of the CurseForge game version tags applicable for this file. These IDs are not guaranteed to be
      * consistent across uploads, so they must be resolved using a separate API call. This set is resolved using values
-     * from {@link #gameVersions} during {@link #prepareForUpload(GameVersions, Function)}.
+     * from {@link #gameVersions} during {@link #prepareForUpload(GameVersions)}.
      */
     @Nullable
     private Set<Long> uploadVersions;
@@ -104,7 +110,7 @@ public class UploadArtifact {
 
     /**
      * An internal object that holds all project relationships for the artifact. This will be created from the values of
-     * {@link #relationships} during the {@link #prepareForUpload(GameVersions, Function)} step.
+     * {@link #relationships} during the {@link #prepareForUpload(GameVersions)} step.
      */
     private final ProjectRelations uploadRelations = new ProjectRelations();
 
@@ -156,20 +162,29 @@ public class UploadArtifact {
     /**
      * These are created using a helper method from TaskPublishCurseForge. Users should never construct this manually.
      *
-     * @param artifact  The artifact to publish. This is not necessarily a file and may not be valid until later in the
-     *                  build process.
-     * @param projectId The ID of the project to publish this artifact to.
-     * @param log       A logger used to help with debugging. This is taken from the Task that define the artifact and
-     *                  is unique to each task.
-     * @param parent    An optional parent artifact. When defined the current artifact is treated as a
-     *                  child/additional/sub file.
+     * @param artifact      The artifact to publish. This is not necessarily a file and may not be valid until later in the
+     *                      build process.
+     * @param projectId     The ID of the project to publish this artifact to.
+     * @param objectFactory The project-local object factory.
+     * @param log           A logger used to help with debugging. This is taken from the Task that define the artifact and
+     *                      is unique to each task.
+     * @param parent        An optional parent artifact. When defined the current artifact is treated as a
+     *                      child/additional/sub file.
      */
-    protected UploadArtifact(Object artifact, Long projectId, Logger log, @Nullable UploadArtifact parent) {
-
+    protected UploadArtifact(Object artifact, Long projectId, ObjectFactory objectFactory, Logger log, @Nullable UploadArtifact parent) {
+        this.objectFactory = objectFactory;
         this.log = log;
-        this.artifact = artifact;
         this.projectId = projectId;
         this.parent = parent;
+
+        ConfigurableFileCollection artifactContainer = objectFactory.fileCollection().from(artifact);
+        artifactContainer.disallowChanges();
+        this.artifact = artifactContainer;
+    }
+
+    @InputFiles
+    public FileCollection getArtifact() {
+        return artifact;
     }
 
     /**
@@ -193,7 +208,7 @@ public class UploadArtifact {
             throw new GradleException("Child artifacts must not have their own children. Artifacts can only be nested one layer deep.");
         }
 
-        final UploadArtifact subFile = new UploadArtifact(file, this.projectId, this.log, this);
+        final UploadArtifact subFile = new UploadArtifact(file, this.projectId, this.objectFactory, this.log, this);
         subFile.changelogType = this.changelogType;
         subFile.changelog = this.changelog;
         subFile.releaseType = this.releaseType;
@@ -344,13 +359,10 @@ public class UploadArtifact {
      * by the API. This is intended for internal use.
      *
      * @param validGameVersions The valid game version data from the API.
-     * @param fileResolver      A function used to resolve the file from an object. File resolution can use the Gradle
-     *                          project as a fallback so this is defined as a Function to avoid creating a hard relation
-     *                          to the Gradle project.
      */
-    public final void prepareForUpload(GameVersions validGameVersions, Function<Object, File> fileResolver) {
+    public final void prepareForUpload(GameVersions validGameVersions) {
 
-        this.uploadFile = fileResolver.apply(this.artifact);
+        this.uploadFile = this.artifact.getSingleFile();
 
         // Make sure the file being uploaded actually exists.
         if (!this.uploadFile.exists()) {
@@ -471,8 +483,8 @@ public class UploadArtifact {
      *
      * @return An immutable collection of additional artifacts.
      */
+    @Nested
     public final Collection<UploadArtifact> getAdditionalArtifacts() {
-
         return ImmutableList.copyOf(this.additionalFiles);
     }
 
