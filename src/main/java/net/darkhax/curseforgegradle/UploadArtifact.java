@@ -399,16 +399,19 @@ public class UploadArtifact {
 
         this.log.debug("Preparing to upload file {}.", this.uploadFile.getName());
 
-        // Make sure a valid changelog type is being used.
-        if (!Constants.VALID_CHANGELOG_TYPES.contains(this.changelogType)) {
+        String parsedChangelogType = TaskPublishCurseForge.parseString(this.changelogType);
+        String parsedReleaseType = TaskPublishCurseForge.parseString(this.releaseType);
 
-            this.log.warn("Changelog type {} is not recognized. This may cause issues!", this.changelogType);
+        // Make sure a valid changelog type is being used.
+        if (!Constants.VALID_CHANGELOG_TYPES.contains(parsedChangelogType)) {
+
+            this.log.warn("Changelog type {} is not recognized. This may cause issues!", parsedChangelogType);
         }
 
         // Make sure a valid release type is being used.
-        if (!Constants.VALID_RELEASE_TYPES.contains(this.releaseType)) {
+        if (!Constants.VALID_RELEASE_TYPES.contains(parsedReleaseType)) {
 
-            this.log.warn("Release type {} is not recognized. This may cause issues!", this.releaseType);
+            this.log.warn("Release type {} is not recognized. This may cause issues!", parsedReleaseType);
         }
 
         // Make sure all file relationships are valid. The project slugs are not tested because it's not realistic to do that with the current API limitations.
@@ -429,17 +432,6 @@ public class UploadArtifact {
 
         // Resolve game versions from strings to IDs using the results from the CurseForge API.
         this.uploadVersions = validGameVersions.resolveVersions(this.gameVersions);
-
-        // Validate types
-        if (!Constants.VALID_CHANGELOG_TYPES.contains(TaskPublishCurseForge.parseString(this.changelogType))) {
-
-            this.log.warn("Changelog type {} is not recognized as valid.", changelogType);
-        }
-
-        if (!Constants.VALID_RELEASE_TYPES.contains(TaskPublishCurseForge.parseString(this.releaseType))) {
-
-            this.log.warn("Release type {} is not recognized.", releaseType);
-        }
     }
 
     /**
