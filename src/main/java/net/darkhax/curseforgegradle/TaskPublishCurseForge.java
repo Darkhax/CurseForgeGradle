@@ -1,5 +1,6 @@
 package net.darkhax.curseforgegradle;
 
+import groovy.lang.Closure;
 import com.google.common.collect.ImmutableList;
 import net.darkhax.curseforgegradle.api.versions.GameVersions;
 import org.gradle.api.Action;
@@ -275,6 +276,20 @@ public class TaskPublishCurseForge extends DefaultTask {
      * @return The resolved value.
      */
     public static String parseString(Object obj) {
+
+        if (obj instanceof Closure) {
+
+            //Try to unwrap the closure. We do this before other checks such as if it is a file to allow processing
+            // closures that return a file instead of only supporting ones that provide a string
+            try {
+                obj = ((Closure<?>) obj).call();
+            }
+
+            catch (Exception e) {
+
+                throw new GradleException("Could not resolve closure as a string.", e);
+            }
+        }
 
         if (obj instanceof File) {
 
