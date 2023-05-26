@@ -7,6 +7,9 @@ import org.gradle.api.logging.Logger;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import org.gradle.api.plugins.JavaPluginExtension;
+import org.gradle.api.provider.Property;
+import org.gradle.jvm.toolchain.JavaLanguageVersion;
 
 /**
  * This class is responsible for detecting versions from properties in the build environment. Each task will have one
@@ -65,6 +68,7 @@ public final class VersionDetector {
             detectProperty("mc_version");
             detectProperty("mcVersion");
             detectProperty("minecraftVersion");
+            detectJavaToolchainVersion();
         }
     }
 
@@ -107,6 +111,26 @@ public final class VersionDetector {
 
             this.log.debug("Detected property '{}'. Automatically applying version '{}'.", propertyName, propertyVersion);
             this.detectedVersions.add(propertyVersion);
+        }
+    }
+
+    /**
+     * Attempts to detect the java version from the configured java tool chain.
+     */
+    private void detectJavaToolchainVersion() {
+
+        JavaPluginExtension extension = this.project.getExtensions().findByType(JavaPluginExtension.class);
+
+        if (extension !=  null) {
+
+            Property<JavaLanguageVersion> languageVersion = extension.getToolchain().getLanguageVersion();
+            int version = languageVersion.map(JavaLanguageVersion::asInt).getOrElse(0);
+
+            if (version > 0) {
+
+                this.log.debug("Detected java version '{}'. Automatically applying version 'Java {}'.", version, version);
+                this.detectedVersions.add("Java " + version);
+            }
         }
     }
 }

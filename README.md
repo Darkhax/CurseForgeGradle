@@ -72,6 +72,7 @@ The following versions are detected when using CurseForgeGradle in a Minecraft p
 - When the `net.minecraftforge.gradle` plugin is applied in the same script the `Forge` tag will be applied.
 - When the `fabric-loom` plugin is applied in the same script the `Fabric` tag will be applied.
 - When the `MC_VERSION`, `mc_version`, or `minecraft_version` property is set its value will be added as a game version.
+- When a java toolchain is configured in the same script a corresponding java version tag will be added as a game version.
 
 ### Available Properties
 The following properties and methods are exposed for use within your script.
