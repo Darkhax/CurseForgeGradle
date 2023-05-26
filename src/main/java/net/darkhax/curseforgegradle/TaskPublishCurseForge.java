@@ -64,6 +64,11 @@ public class TaskPublishCurseForge extends DefaultTask {
     public Object apiToken;
 
     /**
+     * Determines if publishing should actually happen. Set this to {@code true} to log the json request instead of sending it to curse's servers.
+     */
+    public boolean debugMode;
+
+    /**
      * This task should not be constructed manually. It will be constructed dynamically by Gradle when a user defines
      * the task. Code inside the constructor will be executed before the user configuration.
      */
@@ -208,15 +213,36 @@ public class TaskPublishCurseForge extends DefaultTask {
         // and processes the response.
         for (UploadArtifact artifact : this.uploadArtifacts) {
 
-            artifact.prepareForUpload(this.validGameVersions);
-            artifact.beginUpload(endpointString, tokenString);
+            uploadArtifact(artifact, endpointString, tokenString);
 
             // Handle additional files, sometimes called sub files or child files.
             for (UploadArtifact childArtifact : artifact.getAdditionalArtifacts()) {
 
-                childArtifact.prepareForUpload(this.validGameVersions);
-                childArtifact.beginUpload(endpointString, tokenString);
+                uploadArtifact(childArtifact, endpointString, tokenString);
             }
+        }
+    }
+
+    /**
+     * Each artifact goes through two steps. The prepare step is used to process the artifact configuration into a
+     * format accepted by the API. The second step is the upload step which posts an upload request to the API and
+     * processes the response. If {@link #debugMode} is true, this second step will instead be replaced with logging.
+     *
+     * @param artifact Artifact being uploaded.
+     * @param endpoint The endpoint to upload the file to.
+     * @param token    The CurseForge API token used to authenticate the upload.
+     */
+    private void uploadArtifact(UploadArtifact artifact, String endpoint, String token) {
+
+        artifact.prepareForUpload(this.validGameVersions);
+        if (debugMode) {
+
+            artifact.logUploadMetadata(endpoint);
+        }
+
+        else {
+
+            artifact.beginUpload(endpoint, token);
         }
     }
 

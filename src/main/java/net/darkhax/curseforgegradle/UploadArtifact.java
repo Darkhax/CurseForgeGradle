@@ -417,6 +417,34 @@ public class UploadArtifact {
     }
 
     /**
+     * Builds the upload file URI for this project.
+     *
+     * @param endpoint The endpoint to upload the file to.
+     */
+    private String getUploadTarget(String endpoint) {
+
+        return endpoint + "/api/projects/" + this.projectId + "/upload-file";
+    }
+
+    /**
+     * Logs the URI this artifact would be uploaded to as well as the metadata for this artifact.
+     *
+     * @param endpoint The endpoint to upload the file to.
+     */
+    public final void logUploadMetadata(String endpoint) {
+
+        this.log.lifecycle("Upload file URI for {}: {}", this.uploadFile.getName(), getUploadTarget(endpoint));
+        this.log.lifecycle(Constants.PRETTY_GSON.toJson(this.createMetadata()));
+
+        StringJoiner prettyVersions = new StringJoiner(", ");
+        for (String gameVersion : this.gameVersions) {
+
+            prettyVersions.add(gameVersion);
+        }
+        this.log.lifecycle("Game versions: {}", prettyVersions);
+    }
+
+    /**
      * Triggers the post request to the API that will begin the upload of the artifact. This is intended for internal
      * use.
      *
@@ -431,7 +459,7 @@ public class UploadArtifact {
         requestEntity.addTextBody("metadata", Constants.GSON.toJson(this.createMetadata()), ContentType.APPLICATION_JSON);
         requestEntity.addBinaryBody("file", this.uploadFile);
 
-        final HttpPost request = new HttpPost(endpoint + "/api/projects/" + this.projectId + "/upload-file");
+        final HttpPost request = new HttpPost(getUploadTarget(endpoint));
         request.addHeader("X-Api-Token", token);
         request.setEntity(requestEntity.build());
 

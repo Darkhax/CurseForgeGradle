@@ -19,6 +19,11 @@ public class Constants {
     public static final Gson GSON = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
 
     /**
+     * A GSON instance that is used by the plugin to serialize objects to JSON for use in more readable logging.
+     */
+    public static final Gson PRETTY_GSON = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().setPrettyPrinting().create();
+
+    /**
      * The value for an embedded relationship. This is used when the files you publish contain an embedded version of
      * the other project.
      */
