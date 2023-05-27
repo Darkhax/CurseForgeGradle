@@ -21,6 +21,7 @@ import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.Nested;
 
 import javax.annotation.Nullable;
@@ -84,6 +85,7 @@ public class UploadArtifact {
      * and will remain null until the file has been uploaded.
      */
     @Nullable
+    @Internal
     private Long curseFileId;
 
     /**
