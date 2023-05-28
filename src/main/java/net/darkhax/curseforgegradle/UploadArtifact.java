@@ -1,6 +1,7 @@
 package net.darkhax.curseforgegradle;
 
 import com.google.common.collect.ImmutableList;
+import java.util.StringJoiner;
 import net.darkhax.curseforgegradle.api.metadata.Metadata;
 import net.darkhax.curseforgegradle.api.metadata.ProjectRelations;
 import net.darkhax.curseforgegradle.api.upload.ResponseError;
@@ -20,6 +21,7 @@ import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.Nested;
 
 import javax.annotation.Nullable;
@@ -83,6 +85,7 @@ public class UploadArtifact {
      * and will remain null until the file has been uploaded.
      */
     @Nullable
+    @Internal
     private Long curseFileId;
 
     /**
@@ -223,11 +226,11 @@ public class UploadArtifact {
      * yours. It may also prevent that project from being installed with a launcher when this file is already
      * installed.
      *
-     * @param slug The slug of the incompatible project.
+     * @param slugs The slugs of the incompatible projects.
      */
-    public void addIncompatibility(Object slug) {
+    public void addIncompatibility(Object... slugs) {
 
-        this.addRelation(slug, Constants.RELATION_INCOMPATIBLE);
+        this.addRelations(Constants.RELATION_INCOMPATIBLE, slugs);
     }
 
     /**
@@ -235,83 +238,108 @@ public class UploadArtifact {
      * required project when they download this file. It may also cause the latest compatible version of that project to
      * be installed automatically when this file is installed through a launcher.
      *
-     * @param slug The slug of the required project.
+     * @param slugs The slug of the required projects.
      */
-    public void addRequirement(Object slug) {
+    public void addRequirement(Object... slugs) {
 
-        this.addRelation(slug, Constants.RELATION_REQUIRED);
+        this.addRelations(Constants.RELATION_REQUIRED, slugs);
     }
 
     /**
      * Marks another project as being embedded within this file.
      *
-     * @param slug The slug of the embedded project.
+     * @param slugs The slugs of the embedded projects.
      */
-    public void addEmbedded(Object slug) {
+    public void addEmbedded(Object... slugs) {
 
-        this.addRelation(slug, Constants.RELATION_EMBEDDED);
+        this.addRelations(Constants.RELATION_EMBEDDED, slugs);
     }
 
     /**
      * Marks another project as being a tool for this file. Nobody seems to know what this means.
      *
-     * @param slug The slug of the tool project.
+     * @param slugs The slugs of the tool projects.
      */
-    public void addTool(Object slug) {
+    public void addTool(Object... slugs) {
 
-        this.addRelation(slug, Constants.RELATION_TOOL);
+        this.addRelations(Constants.RELATION_TOOL, slugs);
     }
 
     /**
      * Marks another project as being optional. This is used to let users know that this file has special support for
      * another project or works really well with that project.
      *
-     * @param slug The slug of the optional project.
+     * @param slugs The slugs of the optional projects.
      */
-    public void addOptional(Object slug) {
+    public void addOptional(Object... slugs) {
 
-        this.addRelation(slug, Constants.RELATION_OPTIONAL);
+        this.addRelations(Constants.RELATION_OPTIONAL, slugs);
     }
 
     /**
      * Marks the file as supporting a given modloader. This is primarily used by Minecraft for the Forge, Fabric, and
      * Rift loaders.
      *
-     * @param modloader The modloader that is supported by this file.
+     * @param modloaders The modloaders that are supported by this file.
      */
-    public void addModLoader(Object modloader) {
+    public void addModLoader(Object... modloaders) {
 
         // Mod loaders are considered game versions for now.
-        addGameVersion(modloader);
+        addGameVersion(modloaders);
     }
 
     /**
-     * Marks the file as supporting a given Java version.
+     * Marks the file as supporting the given Java versions.
      *
-     * @param javaVersion The java version that is supported.
+     * @param javaVersions The java versions that are supported.
      */
-    public void addJavaVersion(Object javaVersion) {
+    public void addJavaVersion(Object... javaVersions) {
 
         // Java versions are considered game versions for now.
-        addGameVersion(javaVersion);
+        addGameVersion(javaVersions);
     }
 
     /**
-     * Marks the file as supporting a given game version.
+     * Marks the file as supporting a given game versions.
      *
-     * @param gameVersion The game version supported by this file.
+     * @param gameVersions The game versions supported by this file.
      */
-    public void addGameVersion(Object gameVersion) {
-
-        final String versionString = TaskPublishCurseForge.parseString(gameVersion);
+    public void addGameVersion(Object... gameVersions) {
 
         if (this.parent != null) {
 
-            this.log.error("Attempted to set the version of an additional file. This is not allowed! version={}", versionString);
+            StringJoiner versionString = new StringJoiner(", ");
+            for (Object gameVersion : gameVersions) {
+
+                versionString.add(TaskPublishCurseForge.parseString(gameVersion));
+            }
+
+            this.log.error("Attempted to set the version of an additional file. This is not allowed! versions={}", versionString);
             throw new GradleException("Sub files can not have their own versions!");
         }
 
-        this.gameVersions.add(versionString);
+        for (Object gameVersion : gameVersions) {
+
+            final String versionString = TaskPublishCurseForge.parseString(gameVersion);
+            this.gameVersions.add(versionString);
+        }
+    }
+
+    /**
+     * Adds a relationship between this artifact and multiple other projects on CurseForge. This can have different connotations
+     * depending on the game and the platform consuming this data. For example in the case of a Minecraft mod defining a
+     * required dependency relationship will cause the official CurseForge launcher to automatically download a valid
+     * version of that project when this file is requested.
+     *
+     * @param type  The type of relationship to define.
+     * @param slugs The slug of the project to define a relationship with.
+     */
+    public void addRelations(Object type, Object... slugs) {
+
+        for (Object slug : slugs) {
+
+            addRelation(slug, type);
+        }
     }
 
     /**
@@ -373,16 +401,19 @@ public class UploadArtifact {
 
         this.log.debug("Preparing to upload file {}.", this.uploadFile.getName());
 
-        // Make sure a valid changelog type is being used.
-        if (!Constants.VALID_CHANGELOG_TYPES.contains(this.changelogType)) {
+        String parsedChangelogType = TaskPublishCurseForge.parseString(this.changelogType);
+        String parsedReleaseType = TaskPublishCurseForge.parseString(this.releaseType);
 
-            this.log.warn("Changelog type {} is not recognized. This may cause issues!", this.changelogType);
+        // Make sure a valid changelog type is being used.
+        if (!Constants.VALID_CHANGELOG_TYPES.contains(parsedChangelogType)) {
+
+            this.log.warn("Changelog type {} is not recognized. This may cause issues!", parsedChangelogType);
         }
 
         // Make sure a valid release type is being used.
-        if (!Constants.VALID_RELEASE_TYPES.contains(this.releaseType)) {
+        if (!Constants.VALID_RELEASE_TYPES.contains(parsedReleaseType)) {
 
-            this.log.warn("Release type {} is not recognized. This may cause issues!", this.releaseType);
+            this.log.warn("Release type {} is not recognized. This may cause issues!", parsedReleaseType);
         }
 
         // Make sure all file relationships are valid. The project slugs are not tested because it's not realistic to do that with the current API limitations.
@@ -403,17 +434,34 @@ public class UploadArtifact {
 
         // Resolve game versions from strings to IDs using the results from the CurseForge API.
         this.uploadVersions = validGameVersions.resolveVersions(this.gameVersions);
+    }
 
-        // Validate types
-        if (!Constants.VALID_CHANGELOG_TYPES.contains(TaskPublishCurseForge.parseString(this.changelogType))) {
+    /**
+     * Builds the upload file URI for this project.
+     *
+     * @param endpoint The endpoint to upload the file to.
+     */
+    private String getUploadTarget(String endpoint) {
 
-            this.log.warn("Changelog type {} is not recognized as valid.", changelogType);
+        return endpoint + "/api/projects/" + this.projectId + "/upload-file";
+    }
+
+    /**
+     * Logs the URI this artifact would be uploaded to as well as the metadata for this artifact.
+     *
+     * @param endpoint The endpoint to upload the file to.
+     */
+    public final void logUploadMetadata(String endpoint) {
+
+        this.log.lifecycle("Upload file URI for {}: {}", this.uploadFile.getName(), getUploadTarget(endpoint));
+        this.log.lifecycle(Constants.PRETTY_GSON.toJson(this.createMetadata()));
+
+        StringJoiner prettyVersions = new StringJoiner(", ");
+        for (String gameVersion : this.gameVersions) {
+
+            prettyVersions.add(gameVersion);
         }
-
-        if (!Constants.VALID_RELEASE_TYPES.contains(TaskPublishCurseForge.parseString(this.releaseType))) {
-
-            this.log.warn("Release type {} is not recognized.", releaseType);
-        }
+        this.log.lifecycle("Game versions: {}", prettyVersions);
     }
 
     /**
@@ -431,7 +479,7 @@ public class UploadArtifact {
         requestEntity.addTextBody("metadata", Constants.GSON.toJson(this.createMetadata()), ContentType.APPLICATION_JSON);
         requestEntity.addBinaryBody("file", this.uploadFile);
 
-        final HttpPost request = new HttpPost(endpoint + "/api/projects/" + this.projectId + "/upload-file");
+        final HttpPost request = new HttpPost(getUploadTarget(endpoint));
         request.addHeader("X-Api-Token", token);
         request.setEntity(requestEntity.build());
 

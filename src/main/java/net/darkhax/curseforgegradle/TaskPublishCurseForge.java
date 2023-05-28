@@ -1,5 +1,6 @@
 package net.darkhax.curseforgegradle;
 
+import groovy.lang.Closure;
 import com.google.common.collect.ImmutableList;
 import net.darkhax.curseforgegradle.api.versions.GameVersions;
 import org.gradle.api.Action;
@@ -64,6 +65,11 @@ public class TaskPublishCurseForge extends DefaultTask {
     public Object apiToken;
 
     /**
+     * Determines if publishing should actually happen. Set this to {@code true} to log the json request instead of sending it to curse's servers.
+     */
+    public boolean debugMode;
+
+    /**
      * This task should not be constructed manually. It will be constructed dynamically by Gradle when a user defines
      * the task. Code inside the constructor will be executed before the user configuration.
      */
@@ -112,8 +118,7 @@ public class TaskPublishCurseForge extends DefaultTask {
      *
      * @param projectId The CurseForge project ID to publish this artifact to.
      * @param toUpload  The artifact to upload when this artifact is published. This can accept files, archive tasks,
-     *                  and several other types of files. The resolution of this is handled by {@link
-     *                  #resolveFile(Object)}.
+     *                  and several other types of files. The resolution of this is handled by {@link FileCollection}.
      * @param action    The {@link Action} to apply before returning the artifact.
      * @return An object that represents the artifact being published. This can be used to perform additional
      * configuration such as defining a changelog.
@@ -183,7 +188,7 @@ public class TaskPublishCurseForge extends DefaultTask {
         // Handle auto version detection.
         if (this.versionDetector.isEnabled) {
 
-            this.versionDetector.detectVersions();
+            this.versionDetector.detectVersions(this.validGameVersions);
 
             for (String detectedVersion : this.versionDetector.getDetectedVersions()) {
 
@@ -208,15 +213,36 @@ public class TaskPublishCurseForge extends DefaultTask {
         // and processes the response.
         for (UploadArtifact artifact : this.uploadArtifacts) {
 
-            artifact.prepareForUpload(this.validGameVersions);
-            artifact.beginUpload(endpointString, tokenString);
+            uploadArtifact(artifact, endpointString, tokenString);
 
             // Handle additional files, sometimes called sub files or child files.
             for (UploadArtifact childArtifact : artifact.getAdditionalArtifacts()) {
 
-                childArtifact.prepareForUpload(this.validGameVersions);
-                childArtifact.beginUpload(endpointString, tokenString);
+                uploadArtifact(childArtifact, endpointString, tokenString);
             }
+        }
+    }
+
+    /**
+     * Each artifact goes through two steps. The prepare step is used to process the artifact configuration into a
+     * format accepted by the API. The second step is the upload step which posts an upload request to the API and
+     * processes the response. If {@link #debugMode} is true, this second step will instead be replaced with logging.
+     *
+     * @param artifact Artifact being uploaded.
+     * @param endpoint The endpoint to upload the file to.
+     * @param token    The CurseForge API token used to authenticate the upload.
+     */
+    private void uploadArtifact(UploadArtifact artifact, String endpoint, String token) {
+
+        artifact.prepareForUpload(this.validGameVersions);
+        if (debugMode) {
+
+            artifact.logUploadMetadata(endpoint);
+        }
+
+        else {
+
+            artifact.beginUpload(endpoint, token);
         }
     }
 
@@ -249,6 +275,20 @@ public class TaskPublishCurseForge extends DefaultTask {
      * @return The resolved value.
      */
     public static String parseString(Object obj) {
+
+        if (obj instanceof Closure) {
+
+            //Try to unwrap the closure. We do this before other checks such as if it is a file to allow processing
+            // closures that return a file instead of only supporting ones that provide a string
+            try {
+                obj = ((Closure<?>) obj).call();
+            }
+
+            catch (Exception e) {
+
+                throw new GradleException("Could not resolve closure as a string.", e);
+            }
+        }
 
         if (obj instanceof File) {
 
