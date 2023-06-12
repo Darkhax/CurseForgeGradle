@@ -93,7 +93,7 @@ public final class GameVersions {
             for (final VersionType type : versionTypes) {
 
                 // TODO this is hardcoded to Minecraft. A more generic solution is required.
-                if (type.getSlug().startsWith("minecraft") || type.getSlug().equals("java") || type.getSlug().equals("modloader")) {
+                if (type.getSlug().startsWith("minecraft") || type.getSlug().equals("java") || type.getSlug().equals("modloader") || type.getSlug().equals("environment")) {
 
                     this.validVersionTypes.add(type.getId());
                 }
