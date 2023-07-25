@@ -62,15 +62,22 @@ public final class VersionDetector {
 
         if (isEnabled) {
 
-            // Minecraft support
+            // Minecraft
+
+            // Detect ModLoader versions.
             detectPlugin(validGameVersions, "net.minecraftforge.gradle", "Forge");
             detectPlugin(validGameVersions, "fabric-loom", "Fabric");
             detectPlugin(validGameVersions, "org.quiltmc.loom", "Quilt");
+            detectPlugin(validGameVersions, "net.neoforged.gradle", "NeoForge");
+
+            // Detect Minecraft versions.
             detectProperty(validGameVersions, "MC_VERSION");
             detectProperty(validGameVersions, "minecraft_version");
             detectProperty(validGameVersions, "mc_version");
             detectProperty(validGameVersions, "mcVersion");
             detectProperty(validGameVersions, "minecraftVersion");
+
+            // Detect Java versions.
             detectJavaToolchainVersion(validGameVersions);
         }
     }
