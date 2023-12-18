@@ -8,14 +8,17 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.Task;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.file.RegularFile;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.TaskAction;
 
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.LinkedList;
 import java.util.List;
@@ -290,10 +293,28 @@ public class TaskPublishCurseForge extends DefaultTask {
             }
         }
 
+        if (obj instanceof Provider<?>) {
+
+            //Try to unwrap the Gradle provider. We do this before other checks such as if it is a file to allow processing
+            // Providers that return a file instead of only supporting ones that provide a string
+            try {
+                obj = ((Provider<?>) obj).get();
+            }
+
+            catch (Exception e) {
+
+                throw new GradleException("Could not resolve Provider as a string.", e);
+            }
+        }
+
+        if (obj instanceof RegularFile) {
+            obj = ((RegularFile) obj).getAsFile();
+        }
+
         if (obj instanceof File) {
 
             try {
-                return new String(Files.readAllBytes(((File) obj).toPath()));
+                return new String(Files.readAllBytes(((File) obj).toPath()), StandardCharsets.UTF_8);
             }
 
             catch (IOException e) {
