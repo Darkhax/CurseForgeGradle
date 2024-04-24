@@ -37,7 +37,7 @@ gradlePlugin {
             id = project.group
             displayName = project.archiveBaseName
             description = project.description
-            tags.set(gradle_tags.split(', '))
+            tags.set(['curseforge', 'mod', 'gradle', 'publish']) 
             implementationClass = "${project.group}.${project.archiveBaseName}Plugin"
         }
     }
