@@ -28,38 +28,17 @@ dependencies {
 }
 
 gradlePlugin {
-
+    
+    website = project.website
+    vcsUrl = project.source
+    
     plugins {
-
         curseforgegradle {
-
             id = project.group
             displayName = project.archiveBaseName
             description = project.description
+            tags = gradle_tags.split(', ')
             implementationClass = "${project.group}.${project.archiveBaseName}Plugin"
         }
-    }
-}
-
-pluginBundle {
-
-    website = project.website
-    vcsUrl = project.source
-    description = project.description
-    tags = gradle_tags.split(', ')
-
-    plugins {
-
-        curseforgegradle {
-
-            displayName = project.archiveBaseName
-        }
-    }
-
-    mavenCoordinates {
-
-        groupId = project.group.toString()
-        artifactId = project.name
-        version = project.version.toString()
     }
 }
