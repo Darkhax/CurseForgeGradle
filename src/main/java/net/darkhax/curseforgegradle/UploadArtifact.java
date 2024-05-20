@@ -1,7 +1,6 @@
 package net.darkhax.curseforgegradle;
 
 import com.google.common.collect.ImmutableList;
-import java.util.StringJoiner;
 import net.darkhax.curseforgegradle.api.metadata.Metadata;
 import net.darkhax.curseforgegradle.api.metadata.ProjectRelations;
 import net.darkhax.curseforgegradle.api.upload.ResponseError;
@@ -36,6 +35,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringJoiner;
 
 /**
  * This class defines the script-time representation of an artifact being published to CurseForge. Users will directly
@@ -74,8 +74,8 @@ public class UploadArtifact {
     private final FileCollection artifact;
 
     /**
-     * An internal reference to the upload artifact as a NIO File. This is null until the {@link
-     * #prepareForUpload(GameVersions)} step has happened.
+     * An internal reference to the upload artifact as a NIO File. This is null until the
+     * {@link #prepareForUpload(GameVersions)} step has happened.
      */
     @Nullable
     private File uploadFile = null;
@@ -165,12 +165,12 @@ public class UploadArtifact {
     /**
      * These are created using a helper method from TaskPublishCurseForge. Users should never construct this manually.
      *
-     * @param artifact      The artifact to publish. This is not necessarily a file and may not be valid until later in the
-     *                      build process.
+     * @param artifact      The artifact to publish. This is not necessarily a file and may not be valid until later in
+     *                      the build process.
      * @param projectId     The ID of the project to publish this artifact to.
      * @param objectFactory The project-local object factory.
-     * @param log           A logger used to help with debugging. This is taken from the Task that define the artifact and
-     *                      is unique to each task.
+     * @param log           A logger used to help with debugging. This is taken from the Task that define the artifact
+     *                      and is unique to each task.
      * @param parent        An optional parent artifact. When defined the current artifact is treated as a
      *                      child/additional/sub file.
      */
@@ -289,6 +289,15 @@ public class UploadArtifact {
     }
 
     /**
+     * Marks the file as supporting a given environment.
+     *
+     * @param environments The supported environments.
+     */
+    public void addEnvironment(Object... environments) {
+        addGameVersion(environments);
+    }
+
+    /**
      * Marks the file as supporting the given Java versions.
      *
      * @param javaVersions The java versions that are supported.
@@ -326,10 +335,10 @@ public class UploadArtifact {
     }
 
     /**
-     * Adds a relationship between this artifact and multiple other projects on CurseForge. This can have different connotations
-     * depending on the game and the platform consuming this data. For example in the case of a Minecraft mod defining a
-     * required dependency relationship will cause the official CurseForge launcher to automatically download a valid
-     * version of that project when this file is requested.
+     * Adds a relationship between this artifact and multiple other projects on CurseForge. This can have different
+     * connotations depending on the game and the platform consuming this data. For example in the case of a Minecraft
+     * mod defining a required dependency relationship will cause the official CurseForge launcher to automatically
+     * download a valid version of that project when this file is requested.
      *
      * @param type  The type of relationship to define.
      * @param slugs The slug of the project to define a relationship with.
