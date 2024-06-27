@@ -19,6 +19,13 @@ import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.provider.ListProperty;
+import org.gradle.api.provider.MapProperty;
+import org.gradle.api.provider.Property;
+import org.gradle.api.provider.Provider;
+import org.gradle.api.provider.SetProperty;
+import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.Nested;
@@ -28,14 +35,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.StringJoiner;
+import org.gradle.api.tasks.Optional;
 
 /**
  * This class defines the script-time representation of an artifact being published to CurseForge. Users will directly
@@ -58,12 +61,14 @@ public class UploadArtifact {
      * same project ID as their parent artifact. This is intentionally immutable to dissuade poorly configured
      * projects.
      */
+    @Input
     private final Long projectId;
 
     /**
      * An internal reference to the parent artifact. This is only used when the current artifact is a child artifact and
      * will be null otherwise. An artifact can only have one parent but a parent artifact can have many children.
      */
+    @Nullable
     private final UploadArtifact parent;
 
     /**
@@ -71,6 +76,7 @@ public class UploadArtifact {
      * various ways files can be represented in a Gradle project. This will be resolved to a NIO File reference during
      * the {@link #prepareForUpload(GameVersions)} step. The result of which is held by {@link #uploadFile}.
      */
+    @InputFile
     private final FileCollection artifact;
 
     /**
@@ -93,14 +99,15 @@ public class UploadArtifact {
      * consistent across uploads, so they must be resolved using a separate API call. This set is resolved using values
      * from {@link #gameVersions} during {@link #prepareForUpload(GameVersions)}.
      */
-    @Nullable
-    private Set<Long> uploadVersions;
+    @Input
+    private final SetProperty<Long> uploadVersions;
 
     /**
      * An internal list of additional files that will be uploaded as children to this artifact when this artifact is
      * uploaded. TODO explain where this happens
      */
-    private final List<UploadArtifact> additionalFiles = new ArrayList<>();
+    @Nested
+    private final ListProperty<UploadArtifact> additionalFiles;
 
     /**
      * An internal map of the relationships defined for this file and other files. These relationships are used by users
@@ -109,7 +116,8 @@ public class UploadArtifact {
      * When a sub file is created using {@link #withAdditionalFile(Object)} it will inherit the current changelog value.
      * This can be changed independently after creation.
      */
-    private Map<String, String> relationships = new HashMap<>();
+    @Input
+    private final MapProperty<String, String> relationships;
 
     /**
      * An internal object that holds all project relationships for the artifact. This will be created from the values of
@@ -126,7 +134,9 @@ public class UploadArtifact {
      * When a sub file is created using {@link #withAdditionalFile(Object)} it will inherit the current changelog value.
      * This can still be changed independently after creation.
      */
-    public Object changelog = null;
+    @Input
+    @Optional
+    private final Property<String> changelog;
 
     /**
      * The type of changelog being defined. CurseForge supports various formats such as markdown and HTML however the
@@ -135,13 +145,16 @@ public class UploadArtifact {
      * When a sub file is created using {@link #withAdditionalFile(Object)} it will inherit the current changelog type.
      * This can still be changed independently after creation.
      */
-    public Object changelogType = Constants.CHANGELOG_TEXT;
+    @Input
+    private final Property<String> changelogType;
 
     /**
      * The display name for the file on CurseForge. When defined this will hide the name of the file on CurseForge. The
      * use of this property is generally discouraged.
      */
-    public Object displayName = null;
+    @Input
+    @Optional
+    private final Property<String> displayName;
 
     /**
      * A set of game versions associated with the artifact. At least one game version is required to upload an artifact.
@@ -151,7 +164,8 @@ public class UploadArtifact {
      * Sub files automatically inherit the game versions of their parent file. This is a hard limit enforced by the
      * CurseForge API and can not be changed after the fact.
      */
-    public Set<String> gameVersions = new HashSet<>();
+    @Input
+    private final SetProperty<String> gameVersions;
 
     /**
      * The type of release for this file. The default release type is an alpha. When using something like CI to automate
@@ -160,7 +174,8 @@ public class UploadArtifact {
      * When a sub file is created using {@link #withAdditionalFile(Object)} it will inherit the current release type.
      * This can still be changed independently after creation.
      */
-    public Object releaseType = Constants.RELEASE_TYPE_ALPHA;
+    @Input
+    private final Property<String> releaseType;
 
     /**
      * These are created using a helper method from TaskPublishCurseForge. Users should never construct this manually.
@@ -180,9 +195,38 @@ public class UploadArtifact {
         this.projectId = projectId;
         this.parent = parent;
 
+        this.relationships = objectFactory.mapProperty(String.class, String.class);
+        this.uploadVersions = objectFactory.setProperty(Long.class);
+        this.gameVersions = objectFactory.setProperty(String.class);
+        this.additionalFiles = objectFactory.listProperty(UploadArtifact.class);
+        this.releaseType = objectFactory.property(String.class).convention(Constants.RELEASE_TYPE_ALPHA);
+        this.changelogType = objectFactory.property(String.class).convention(Constants.CHANGELOG_TEXT);
+        this.changelog = objectFactory.property(String.class);
+        this.displayName = objectFactory.property(String.class);
+
         ConfigurableFileCollection artifactContainer = objectFactory.fileCollection().from(artifact);
         artifactContainer.disallowChanges();
         this.artifact = artifactContainer;
+    }
+
+    public Property<String> getChangelog() {
+        return changelog;
+    }
+
+    public Property<String> getChangelogType() {
+        return changelogType;
+    }
+
+    public Property<String> getDisplayName() {
+        return displayName;
+    }
+
+    public Property<String> getReleaseType() {
+        return releaseType;
+    }
+
+    public SetProperty<String> getGameVersions() {
+        return gameVersions;
     }
 
     @InputFiles
@@ -212,10 +256,10 @@ public class UploadArtifact {
         }
 
         final UploadArtifact subFile = new UploadArtifact(file, this.projectId, this.objectFactory, this.log, this);
-        subFile.changelogType = this.changelogType;
-        subFile.changelog = this.changelog;
-        subFile.releaseType = this.releaseType;
-        subFile.relationships = new HashMap<>(this.relationships);
+        subFile.changelogType.set(this.changelogType);
+        subFile.changelog.set(this.changelog);
+        subFile.releaseType.set(this.releaseType);
+        subFile.relationships.set(this.relationships);
 
         this.additionalFiles.add(subFile);
         return subFile;
@@ -363,7 +407,7 @@ public class UploadArtifact {
     public void addRelation(Object slug, Object type) {
 
         final String slugString = TaskPublishCurseForge.parseString(slug);
-        final String existingRelation = relationships.get(slugString);
+        final Provider<String> existingRelation = relationships.getting(slugString);
         final String typeString = TaskPublishCurseForge.parseString(type);
 
         if (!Constants.VALID_RELATION_TYPES.contains(typeString)) {
@@ -371,17 +415,17 @@ public class UploadArtifact {
             this.log.warn("Unknown relation type {} was defined for project {}.", typeString, slugString);
         }
 
-        if (existingRelation != null) {
+        if (existingRelation.isPresent()) {
 
             if (typeString == null) {
 
-                this.relationships.remove(slugString);
+                this.relationships.get().remove(slugString);
                 this.log.warn("Relation with project {} has been removed.", slugString);
             }
 
             else {
 
-                this.log.warn("Changing relation type for project {} from {} to {}.", slugString, existingRelation, typeString);
+                this.log.warn("Changing relation type for project {} from {} to {}.", slugString, existingRelation.get(), typeString);
             }
         }
 
@@ -410,8 +454,8 @@ public class UploadArtifact {
 
         this.log.debug("Preparing to upload file {}.", this.uploadFile.getName());
 
-        String parsedChangelogType = TaskPublishCurseForge.parseString(this.changelogType);
-        String parsedReleaseType = TaskPublishCurseForge.parseString(this.releaseType);
+        String parsedChangelogType = this.changelogType.get();
+        String parsedReleaseType = this.releaseType.get();
 
         // Make sure a valid changelog type is being used.
         if (!Constants.VALID_CHANGELOG_TYPES.contains(parsedChangelogType)) {
@@ -426,7 +470,7 @@ public class UploadArtifact {
         }
 
         // Make sure all file relationships are valid. The project slugs are not tested because it's not realistic to do that with the current API limitations.
-        for (Map.Entry<String, String> relation : this.relationships.entrySet()) {
+        for (Map.Entry<String, String> relation : this.relationships.get().entrySet()) {
 
             final String projectSlug = relation.getKey();
             final String relationType = relation.getValue();
@@ -442,7 +486,7 @@ public class UploadArtifact {
         }
 
         // Resolve game versions from strings to IDs using the results from the CurseForge API.
-        this.uploadVersions = validGameVersions.resolveVersions(this.gameVersions);
+        this.uploadVersions.set(validGameVersions.resolveVersions(this.gameVersions.get()));
     }
 
     /**
@@ -462,11 +506,11 @@ public class UploadArtifact {
      */
     public final void logUploadMetadata(String endpoint) {
 
-        this.log.lifecycle("Upload file URI for {}: {}", this.uploadFile.getName(), getUploadTarget(endpoint));
+        this.log.lifecycle("Upload file URI for {}: {}", this.uploadFile == null ? null : this.uploadFile.getName(), getUploadTarget(endpoint));
         this.log.lifecycle(Constants.PRETTY_GSON.toJson(this.createMetadata()));
 
         StringJoiner prettyVersions = new StringJoiner(", ");
-        for (String gameVersion : this.gameVersions) {
+        for (String gameVersion : this.gameVersions.get()) {
 
             prettyVersions.add(gameVersion);
         }
@@ -540,9 +584,8 @@ public class UploadArtifact {
      *
      * @return An immutable collection of additional artifacts.
      */
-    @Nested
     public final Collection<UploadArtifact> getAdditionalArtifacts() {
-        return ImmutableList.copyOf(this.additionalFiles);
+        return ImmutableList.copyOf(this.additionalFiles.get());
     }
 
     /**
@@ -553,10 +596,10 @@ public class UploadArtifact {
     private Metadata createMetadata() {
 
         final Metadata request = new Metadata();
-        request.changelog = TaskPublishCurseForge.parseString(this.changelog);
-        request.changelogType = TaskPublishCurseForge.parseString(this.changelogType);
-        request.displayName = TaskPublishCurseForge.parseString(this.displayName);
-        request.releaseType = TaskPublishCurseForge.parseString(this.releaseType);
+        request.changelog = this.changelog.getOrNull();
+        request.changelogType = this.changelogType.get();
+        request.displayName = this.displayName.getOrNull();
+        request.releaseType = this.releaseType.get();
 
         // Only set the relations if they actually exist. Curse doesn't like empty arrays here :upside_down:
         if (!this.uploadRelations.getRelations().isEmpty()) {
@@ -569,7 +612,7 @@ public class UploadArtifact {
 
             // Only parent artifacts can define upload versions. The API gets upset if you give it an empty array or
             // an array that matches the parent. Only a null value is accepted for child files.
-            request.gameVersions = this.uploadVersions;
+            request.gameVersions = this.uploadVersions.getOrNull();
         }
 
         // If the parent is not null this is an additional file / child artifact.

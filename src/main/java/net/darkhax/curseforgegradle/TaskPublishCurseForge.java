@@ -1,7 +1,9 @@
 package net.darkhax.curseforgegradle;
 
-import groovy.lang.Closure;
 import com.google.common.collect.ImmutableList;
+import groovy.lang.Closure;
+import java.util.List;
+import javax.inject.Inject;
 import net.darkhax.curseforgegradle.api.versions.GameVersions;
 import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
@@ -11,7 +13,12 @@ import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.RegularFile;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
+import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.provider.ListProperty;
+import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
+import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.TaskAction;
 
@@ -20,57 +27,56 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * A Gradle task that can publish multiple files to CurseForge. A project can define any number of these tasks, and any
  * given task can be responsible for publishing any number of files to any number of projects.
  */
-public class TaskPublishCurseForge extends DefaultTask {
+public abstract class TaskPublishCurseForge extends DefaultTask {
 
     /**
      * An internal logger instance used to print warnings, errors, and debug information. The logger name includes the
      * name of the project that defined this task and the name of the task.
      */
-    private final Logger log;
+    protected final Logger log;
 
     /**
      * An internal object that fetches and holds the valid game versions for the current game. This will be null until
      * the {@link #initialize()} step has occurred.
      */
     @Nullable
-    private GameVersions validGameVersions;
-
-    /**
-     * Handles the automatic discovery of game version tags from variables in the Gradle environment. If this is not
-     * disabled detected versions will be applied in {@link #initialize()}.
-     */
-    private final VersionDetector versionDetector;
+    protected GameVersions validGameVersions;
 
     /**
      * An internal list of all top-level artifacts that this task should publish. New artifacts are added to this list
      * by using {@link #upload(Object, Object)} during the task configuration phase. These artifacts will be published
      * to CurseForge during the {@link #publish()} step.
      */
-    private final List<UploadArtifact> uploadArtifacts = new LinkedList<>();
+    @Nested
+    private final ListProperty<UploadArtifact> uploadArtifacts;
 
     /**
      * The game specific API endpoint. This is used to retrieve lists of valid versions for a game and to help files get
      * uploaded to the right game.
      */
-    public Object apiEndpoint = "https://minecraft.curseforge.com";
+    @Input
+    private final Property<String> apiEndpoint;
 
     /**
-     * The API token used to publish files on your behalf. This token must have the correct project permissions for the
-     * files to be published. These tokens can be generated here: https://authors.curseforge.com/account/api-tokens
+     * The API token used to publish files on your behalf. This token is required and must have the
+     * correct project permissions for the files to be published. These tokens can be generated here:
+     * <a href="https://authors.curseforge.com/account/api-tokens">https://authors.curseforge.com/account/api-tokens</a>
      */
-    public Object apiToken;
+    @Input
+    private final Property<String> apiToken;
 
     /**
      * Determines if publishing should actually happen. Set this to {@code true} to log the json request instead of sending it to curse's servers.
      */
-    public boolean debugMode;
+    @Input
+    private final Property<Boolean> debugMode;
+
+    private final String displayName;
 
     /**
      * This task should not be constructed manually. It will be constructed dynamically by Gradle when a user defines
@@ -78,8 +84,14 @@ public class TaskPublishCurseForge extends DefaultTask {
      */
     public TaskPublishCurseForge() {
 
-        this.log = Logging.getLogger("CurseForgeGradle/" + this.getProject().getDisplayName() + "/" + this.getName());
-        this.versionDetector = new VersionDetector(this.getProject(), this.log);
+        ObjectFactory objectFactory = getObjectFactory();
+        this.displayName = getProject().getDisplayName();
+        this.log = Logging.getLogger("CurseForgeGradle/" + this.displayName + "/" + this.getName());
+        this.uploadArtifacts = objectFactory.listProperty(UploadArtifact.class);
+        apiEndpoint = objectFactory.property(String.class).convention("https://minecraft.curseforge.com");
+        //Note: Don't set a convention or mark the token as optional, so that we require the user specifies one
+        apiToken = objectFactory.property(String.class);
+        debugMode = objectFactory.property(Boolean.class).convention(false);
 
         // Ensure publishing takes place after the build task has completed. This is required
         // in some environments such as those with parallel task execution enabled.
@@ -91,9 +103,42 @@ public class TaskPublishCurseForge extends DefaultTask {
         }
     }
 
-    @Nested
-    public List<UploadArtifact> getUploadArtifacts() {
-        return ImmutableList.copyOf(uploadArtifacts);
+    @Inject
+    protected abstract ObjectFactory getObjectFactory();
+
+    /**
+     * An internal list of all top-level artifacts that this task should publish. New artifacts are added to this list
+     * by using {@link #upload(Object, Object)} during the task configuration phase. These artifacts will be published
+     * to CurseForge during the {@link #publish()} step.
+     */
+    protected ListProperty<UploadArtifact> getUploadArtifacts() {
+        return uploadArtifacts;
+    }
+
+    @Internal
+    public List<UploadArtifact> getUploadArtifactsImmutable() {
+        return ImmutableList.copyOf(uploadArtifacts.get());
+    }
+
+    /**
+     * The game specific API endpoint. This is used to retrieve lists of valid versions for a game and to help files get
+     * uploaded to the right game.
+     */
+    public Property<String> getApiEndpoint() {
+        return apiEndpoint;
+    }
+
+    /**
+     * The API token used to publish files on your behalf. This token is required and must have the
+     * correct project permissions for the files to be published. These tokens can be generated here:
+     * <a href="https://authors.curseforge.com/account/api-tokens">https://authors.curseforge.com/account/api-tokens</a>
+     */
+    public Property<String> getApiToken() {
+        return apiToken;
+    }
+
+    public Property<Boolean> getDebugMode() {
+        return debugMode;
     }
 
     /**
@@ -109,7 +154,7 @@ public class TaskPublishCurseForge extends DefaultTask {
      */
     public UploadArtifact upload(Object projectId, Object toUpload) {
 
-        final UploadArtifact artifact = new UploadArtifact(toUpload, parseLong(projectId), getProject().getObjects(), this.log, null);
+        final UploadArtifact artifact = new UploadArtifact(toUpload, parseLong(projectId), getObjectFactory(), this.log, null);
         this.uploadArtifacts.add(artifact);
         return artifact;
     }
@@ -134,21 +179,13 @@ public class TaskPublishCurseForge extends DefaultTask {
     }
 
     /**
-     * Disables automatic version detection for all artifacts published through the current task.
-     */
-    public void disableVersionDetection() {
-
-        this.versionDetector.isEnabled = false;
-    }
-
-    /**
      * This method is called when a gradle defined implementation of this task has been invoked. The project and the
      * task should already be configured at this point.
      */
     @TaskAction
     public void apply() {
 
-        if (!this.uploadArtifacts.isEmpty()) {
+        if (!this.uploadArtifacts.get().isEmpty()) {
 
             // The execution of this task is split into two steps.
 
@@ -171,7 +208,7 @@ public class TaskPublishCurseForge extends DefaultTask {
     /**
      * Validates the task configuration and sets up data required for publishing artifacts.
      */
-    private void initialize() {
+    protected void initialize() {
 
         this.log.debug("Initializing upload task.");
 
@@ -182,25 +219,11 @@ public class TaskPublishCurseForge extends DefaultTask {
             throw new GradleException("Can not publish to CurseForge. No API token provided!");
         }
 
-        this.log.debug("Task configured to connect to {}", this.apiEndpoint);
+        this.log.debug("Task configured to connect to {}", this.apiEndpoint.get());
 
         // Request game version data from the API. This is used to map version slugs to API version IDs.
-        this.validGameVersions = new GameVersions(parseString(this.apiEndpoint), this.getProject().getDisplayName(), this.getName());
-        this.validGameVersions.refresh(parseString(this.apiToken));
-
-        // Handle auto version detection.
-        if (this.versionDetector.isEnabled) {
-
-            this.versionDetector.detectVersions(this.validGameVersions);
-
-            for (String detectedVersion : this.versionDetector.getDetectedVersions()) {
-
-                for (UploadArtifact artifact : this.uploadArtifacts) {
-
-                    artifact.addGameVersion(detectedVersion);
-                }
-            }
-        }
+        this.validGameVersions = new GameVersions(this.apiEndpoint.get(), this.displayName, this.getName());
+        this.validGameVersions.refresh(this.apiToken.get());
     }
 
     /**
@@ -208,13 +231,13 @@ public class TaskPublishCurseForge extends DefaultTask {
      */
     private void publish() {
 
-        final String tokenString = parseString(this.apiToken);
-        final String endpointString = parseString(this.apiEndpoint);
+        final String tokenString = this.apiToken.get();
+        final String endpointString = this.apiEndpoint.get();
 
         // Each artifact goes through two steps. The prepare step is used to process the artifact configuration into
         // a format accepted by the API. The second step is the upload step which posts an upload request to the API
         // and processes the response.
-        for (UploadArtifact artifact : this.uploadArtifacts) {
+        for (UploadArtifact artifact : this.uploadArtifacts.get()) {
 
             uploadArtifact(artifact, endpointString, tokenString);
 
@@ -238,7 +261,7 @@ public class TaskPublishCurseForge extends DefaultTask {
     private void uploadArtifact(UploadArtifact artifact, String endpoint, String token) {
 
         artifact.prepareForUpload(this.validGameVersions);
-        if (debugMode) {
+        if (debugMode.get()) {
 
             artifact.logUploadMetadata(endpoint);
         }
