@@ -16,7 +16,7 @@ apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
-archivesBaseName = "${mod_name}-forge-${minecraft_version}"
+project.base.archivesName = "${mod_name}-forge-${minecraft_version}"
 
 minecraft {
 
@@ -100,14 +100,14 @@ publishing {
     }
 }
 
-task publishCurseForge(type: net.darkhax.curseforgegradle.TaskPublishCurseForge) {
+tasks.register('publishCurseForge', net.darkhax.curseforgegradle.TaskPublishCurseForge) {
 
     description = 'publishes the commob build to CurseForge.'
 
-    apiToken = curseforgegradle_testtoken
+    apiToken.set(curseforgegradle_testtoken)
 
     def mainFile = upload(537663, jar)
-    mainFile.changelog = 'This is a test file. It was compiled against Forge.'
+    mainFile.changelog.set('This is a test file. It was compiled against Forge.')
     def sourcesFile = mainFile.withAdditionalFile(sourcesJar)
     def javadocFile = mainFile.withAdditionalFile(javadocJar)
 }

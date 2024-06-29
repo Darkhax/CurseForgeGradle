@@ -22,7 +22,7 @@ buildscript {
 apply plugin: 'net.minecraftforge.gradle'
 
 version = "1.0.${Math.abs(new Random().nextInt())}"
-archivesBaseName = 'CurseForgeGradle-TEST'
+project.base.archivesName = 'CurseForgeGradle-TEST'
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(16)
 java.withSourcesJar()
@@ -39,23 +39,23 @@ dependencies {
 jar.finalizedBy('reobfJar')
 
 // CurseForgeGradle
-task publishCurseForge(type: net.darkhax.curseforgegradle.TaskPublishCurseForge) {
+tasks.register('publishCurseForge', net.darkhax.curseforgegradle.TaskPublishCurseForge) {
 
-    apiToken = curseforgegradle_testtoken
+    apiToken.set(curseforgegradle_testtoken)
 
     // The main file to upload
     def mainFile = upload(537663, jar)
-    mainFile.releaseType = 'beta'
-    mainFile.changelog = 'This is a test file. Please ignore it. The mod does nothing.'
-    mainFile.changelogType = 'markdown'
+    mainFile.releaseType.set('beta')
+    mainFile.changelog.set('This is a test file. Please ignore it. The mod does nothing.')
+    mainFile.changelogType.set('markdown')
     mainFile.addIncompatibility('bookshelf')
 
     // The sources JAR
     def sourcesFile = mainFile.withAdditionalFile(sourcesJar)
-    sourcesFile.changelog = file('changelog.md')
+    sourcesFile.changelog.set(project.layout.buildDirectory.file('changelog.md').map(file -> file.asFile.text))
 
     // The JavaDoc JAR
     def javadocFile = mainFile.withAdditionalFile(javadocJar)
-    javadocFile.changelog = 'This is a test JavaDoc file!'
-    javadocFile.displayName = "JavaDoc - ${version}"
+    javadocFile.changelog.set('This is a test JavaDoc file!')
+    javadocFile.displayName.set("JavaDoc - ${version}")
 }

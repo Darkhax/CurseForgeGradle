@@ -5,7 +5,7 @@ plugins {
     id 'net.darkhax.curseforgegradle' version '0.2.6'
 }
 
-archivesBaseName = "${mod_name}-fabric-${minecraft_version}"
+project.base.archivesName = "${mod_name}-fabric-${minecraft_version}"
 
 dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"
@@ -68,14 +68,14 @@ publishing {
     }
 }
 
-task publishCurseForge(type: net.darkhax.curseforgegradle.TaskPublishCurseForge) {
+tasks.register('publishCurseForge', net.darkhax.curseforgegradle.TaskPublishCurseForge) {
 
     description = 'publishes the commob build to CurseForge.'
 
-    apiToken = curseforgegradle_testtoken
+    apiToken.set(curseforgegradle_testtoken)
 
-    def mainFile = upload(537663, file("${project.buildDir}/libs/${archivesBaseName}-${version}.jar"))
-    mainFile.changelog = 'This is a test file. It was compiled against Fabric.'
+    def mainFile = upload(537663, project.layout.buildDirectory.file("libs/${project.base.archivesName.get()}-${version}.jar"))
+    mainFile.changelog.set('This is a test file. It was compiled against Fabric.')
     def sourcesFile = mainFile.withAdditionalFile(sourcesJar)
     def javadocFile = mainFile.withAdditionalFile(javadocJar)
 }

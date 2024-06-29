@@ -4,7 +4,7 @@ plugins {
     id 'net.darkhax.curseforgegradle' version '0.2.6'
 }
 
-archivesBaseName = "${mod_name}-common-${minecraft_version}"
+project.base.archivesName = "${mod_name}-common-${minecraft_version}"
 
 minecraft {
     version(minecraft_version)
@@ -25,14 +25,14 @@ dependencies {
     compileOnly group: 'org.spongepowered', name: 'mixin', version: '0.8.4'
 }
 
-task publishCurseForge(type: net.darkhax.curseforgegradle.TaskPublishCurseForge) {
+tasks.register('publishCurseForge', net.darkhax.curseforgegradle.TaskPublishCurseForge) {
 
     description = 'publishes the common build to CurseForge.'
 
-    apiToken = curseforgegradle_testtoken
+    apiToken.set(curseforgegradle_testtoken)
 
     def mainFile = upload(537663, jar)
-    mainFile.changelog = 'This is a test file. It was compiled against the vanilla game.'
+    mainFile.changelog.set('This is a test file. It was compiled against the vanilla game.')
     def sourcesFile = mainFile.withAdditionalFile(sourcesJar)
     def javadocFile = mainFile.withAdditionalFile(javadocJar)
 }
