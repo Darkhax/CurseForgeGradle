@@ -39,25 +39,25 @@ buildscript {
 This plugin uses a task based approach to uploading files. Projects define a new task in their build script that will publish various files when invoked. The following example demonstrates how a Java based project would upload their main JAR.
 
 ```groovy
-task publishCurseForge(type: net.darkhax.curseforgegradle.TaskPublishCurseForge) {
+tasks.register('publishCurseForge', net.darkhax.curseforgegradle.TaskPublishCurseForge) {
 
     // This token is used to authenticate with CurseForge. It should be handled
     // with the same level of care and security as your actual password. You 
     // should never share your token with an untrusted source or publish it
     // publicly to GitHub or embed it within a project. The best practice is to
     // store this token in an environment variable or a build secret.
-    apiToken = findProperty('curseforge_token')
+    apiToken.set(project.providers.gradleProperty('curseforge_token'))
     
     // A project ID is required to tell CurseForge which project the uploaded
     // file belongs to. This is public on your project page and is not private
     // information.
-    projectId = findProperty('curseforge_project')
+    def projectId = findProperty('curseforge_project')
 
     // Tells CurseForgeGradle to publish the output of the jar task. This will
     // return a UploadArtifact object that can be used to further configure the
     // file. 
     def mainFile = upload(projectId, jar)
-    mainFile.changelog = 'The changelog string for this file.'
+    mainFile.changelog.set('The changelog string for this file.')
 }
 ```
 
@@ -65,7 +65,7 @@ task publishCurseForge(type: net.darkhax.curseforgegradle.TaskPublishCurseForge)
 Various examples for using CurseForgeGradle can be found [here](https://github.com/Darkhax/CurseForgeGradle/tree/main/examples/local_test_forge). 
 
 ### Automatic Version Detection
-In some cases CurseForgeGradle will be able to automatically detect version tags from context clues in your build environment. This can be useful if you don't want to define them manually however the results may not be perfect. This can be disabled using `disableVersionDetection()` within the body of your CurseForgeGradle task.
+In some cases CurseForgeGradle will be able to automatically detect version tags from context clues in your build environment. To make use of this use `TaskPublishWithDetection` instead of `TaskPublishCurseForge`. This can be useful if you don't want to define them manually however the results may not be perfect, and does not currently support Gradle's Configuration Cache.
 
 #### Minecraft
 The following versions are detected when using CurseForgeGradle in a Minecraft project.
@@ -78,21 +78,20 @@ The following versions are detected when using CurseForgeGradle in a Minecraft p
 The following properties and methods are exposed for use within your script.
 
 #### TaskPublishCurseForge
-| Name                      | Accepted Type          | Description                                                                                                                                                                                                                                                                                                                                                    |
-|---------------------------|------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| apiToken                  | String\|File\|Closure  | The API token used to authenticate with CurseForge. Setting this property is required to use this plugin.                                                                                                                                                                                                                                                      |
-| apiEndpoint               | String\|File\|Closure  | The API endpoint to upload the file to. This is an optional property and will default to the Minecraft API.                                                                                                                                                                                                                                                    |
-| debugMode                 | Boolean                | Determines if publishing should actually happen or if the request should just be logged instead. This is an optional property and will default to false.                                                                                                                                                                                                       |
+| Name                      | Accepted Type          | Description                                                                                                                                                                                                                                                                                                                                                              |
+|---------------------------|------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| apiToken                  | String                 | The API token used to authenticate with CurseForge. Setting this property is required to use this plugin.                                                                                                                                                                                                                                                                |
+| apiEndpoint               | String                 | The API endpoint to upload the file to. This is an optional property and will default to the Minecraft API.                                                                                                                                                                                                                                                              |
+| debugMode                 | Boolean                | Determines if publishing should actually happen or if the request should just be logged instead. This is an optional property and will default to false.                                                                                                                                                                                                                 |
 | upload(projectId, file)   | String\|Number, Object | Invoking this method will configure the task to upload a given file to a given project. The projectId can be a valid numeric String or any valid number. The file can be a file reference, an AbstractArchiveTask, or any other object Gradle can resolve as a file. This returns an UploadArtifact object which can be used to configure the file before publishing it. |
-| disableVersionDetection() |                        | Invoking this method will disable automatic version detection for all files uploaded by this instance of the task.                                                                                                                                                                                                                                             |
 
 #### UploadArtifact
 | Name                            | Accepted Type                                     | Description                                                                                                                                                                                |
 |---------------------------------|---------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| changelog                       | String\|File\|Closure                             | The changelog for the file. This is optional.                                                                                                                                              |
-| changelogType                   | String\|File\|Closure                             | The formatting type of the changelog. The default is plaintext but html and markdown are also accepted.                                                                                    |
-| displayName                     | String\|File\|Closure                             | An optional display name that will visually replace the file name. Using this method is often discouraged.                                                                                 |
-| releaseType                     | String\|File\|Closure                             | The type of release you are publishing. This accepts alpha, beta, and release. The default is alpha.                                                                                       |
+| changelog                       | String                                            | The changelog for the file. This is optional.                                                                                                                                              |
+| changelogType                   | String                                            | The formatting type of the changelog. The default is plaintext but html and markdown are also accepted.                                                                                    |
+| displayName                     | String                                            | An optional display name that will visually replace the file name. Using this method is often discouraged.                                                                                 |
+| releaseType                     | String                                            | The type of release you are publishing. This accepts alpha, beta, and release. The default is alpha.                                                                                       |
 | addIncompatibility(slugs...)    | String\|File\|Closure, ...                        | Marks the file as being incompatible with the specified project(s).                                                                                                                        |
 | addRequirement(slugs...)        | String\|File\|Closure, ...                        | Marks the file as requiring a file from the specified project(s).                                                                                                                          |
 | addEmbedded(slugs...)           | String\|File\|Closure, ...                        | Marks the file as containing an embedded implementation of another project(s).                                                                                                             |
