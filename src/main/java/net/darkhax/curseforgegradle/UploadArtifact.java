@@ -128,53 +128,28 @@ public class UploadArtifact {
     // --- TASK PROPERTIES --- //
 
     /**
-     * An optional changelog for this file. This is displayed on the CurseForge website, and it's use is highly
-     * recommended. For best results this should be defined using a UTF-8 string.
-     * <p>
-     * When a sub file is created using {@link #withAdditionalFile(Object)} it will inherit the current changelog value.
-     * This can still be changed independently after creation.
+     * @see #getChangelog()
      */
-    @Input
-    @Optional
     private final Property<String> changelog;
 
     /**
-     * The type of changelog being defined. CurseForge supports various formats such as markdown and HTML however the
-     * default format is plaintext.
-     * <p>
-     * When a sub file is created using {@link #withAdditionalFile(Object)} it will inherit the current changelog type.
-     * This can still be changed independently after creation.
+     * @see #getChangelogType()
      */
-    @Input
     private final Property<String> changelogType;
 
     /**
-     * The display name for the file on CurseForge. When defined this will hide the name of the file on CurseForge. The
-     * use of this property is generally discouraged.
+     * @see #getDisplayName()
      */
-    @Input
-    @Optional
     private final Property<String> displayName;
 
     /**
-     * A set of game versions associated with the artifact. At least one game version is required to upload an artifact.
-     * Additional meta tags like Java version or Loader version are also considered game versions by CurseForge and are
-     * added here.
-     * <p>
-     * Sub files automatically inherit the game versions of their parent file. This is a hard limit enforced by the
-     * CurseForge API and can not be changed after the fact.
+     * @see #getGameVersions()
      */
-    @Input
     private final SetProperty<String> gameVersions;
 
     /**
-     * The type of release for this file. The default release type is an alpha. When using something like CI to automate
-     * bleeding edge releases it is recommended to retain the alpha release type.
-     * <p>
-     * When a sub file is created using {@link #withAdditionalFile(Object)} it will inherit the current release type.
-     * This can still be changed independently after creation.
+     * @see #getReleaseType()
      */
-    @Input
     private final Property<String> releaseType;
 
     /**
@@ -209,28 +184,74 @@ public class UploadArtifact {
         this.artifact = artifactContainer;
     }
 
+    /**
+     * An optional changelog for this file. This is displayed on the CurseForge website, and it's use is highly
+     * recommended. For best results this should be defined using a UTF-8 string.
+     * <p>
+     * When a sub file is created using {@link #withAdditionalFile(Object)} it will inherit the current changelog value.
+     * This can still be changed independently after creation.
+     */
+    @Input
+    @Optional
     public Property<String> getChangelog() {
+
         return changelog;
     }
 
+    /**
+     * The type of changelog being defined. CurseForge supports various formats such as markdown and HTML however the
+     * default format is plaintext.
+     * <p>
+     * When a sub file is created using {@link #withAdditionalFile(Object)} it will inherit the current changelog type.
+     * This can still be changed independently after creation.
+     */
+    @Input
     public Property<String> getChangelogType() {
+
         return changelogType;
     }
 
+    /**
+     * The display name for the file on CurseForge. When defined this will hide the name of the file on CurseForge. The
+     * use of this property is generally discouraged.
+     */
+    @Input
+    @Optional
     public Property<String> getDisplayName() {
+
         return displayName;
     }
 
+    /**
+     * The type of release for this file. The default release type is an alpha. When using something like CI to automate
+     * bleeding edge releases it is recommended to retain the alpha release type.
+     * <p>
+     * When a sub file is created using {@link #withAdditionalFile(Object)} it will inherit the current release type.
+     * This can still be changed independently after creation.
+     */
+    @Input
     public Property<String> getReleaseType() {
+
         return releaseType;
     }
 
+    /**
+     * A set of game versions associated with the artifact. At least one game version is required to upload an artifact.
+     * Additional meta tags like Java version or Loader version are also considered game versions by CurseForge and are
+     * added here.
+     * <p>
+     * Sub files automatically inherit the game versions of their parent file. This is a hard limit enforced by the
+     * CurseForge API and can not be changed after the fact.
+     */
+    @Input
     public SetProperty<String> getGameVersions() {
+
         return gameVersions;
     }
 
     @InputFiles
     public FileCollection getArtifact() {
+
         return artifact;
     }
 
@@ -338,6 +359,7 @@ public class UploadArtifact {
      * @param environments The supported environments.
      */
     public void addEnvironment(Object... environments) {
+
         addGameVersion(environments);
     }
 
@@ -632,6 +654,7 @@ public class UploadArtifact {
 
     @Nullable
     public Long getCurseFileId() {
+
         return curseFileId;
     }
 }

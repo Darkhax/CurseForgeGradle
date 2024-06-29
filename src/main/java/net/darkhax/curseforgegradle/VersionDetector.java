@@ -35,11 +35,6 @@ public final class VersionDetector {
     private final Set<String> detectedVersions = new HashSet<>();
 
     /**
-     * A flag that determines if the auto-detection is enabled. This can be disabled with user configs.
-     */
-    public boolean isEnabled = true;
-
-    /**
      * The version detector should not be constructed manually. It is automatically constructed when the CurseForge
      * publish task is defined. Each task will have its own instance of the version detector.
      *
@@ -54,33 +49,30 @@ public final class VersionDetector {
     }
 
     /**
-     * Initiates the detection of game versions. If {@link #isEnabled} is false this will not run.
+     * Initiates the detection of game versions.
      *
      * @param validGameVersions Valid game versions for the current game.
      */
     public void detectVersions(GameVersions validGameVersions) {
 
-        if (isEnabled) {
+        // Minecraft
 
-            // Minecraft
+        // Detect ModLoader versions.
+        detectPlugin(validGameVersions, "net.minecraftforge.gradle", "Forge");
+        detectPlugin(validGameVersions, "fabric-loom", "Fabric");
+        detectPlugin(validGameVersions, "org.quiltmc.loom", "Quilt");
+        detectPlugin(validGameVersions, "net.neoforged.gradle", "NeoForge");
+        detectPlugin(validGameVersions, "net.neoforged.gradle.userdev", "NeoForge");
 
-            // Detect ModLoader versions.
-            detectPlugin(validGameVersions, "net.minecraftforge.gradle", "Forge");
-            detectPlugin(validGameVersions, "fabric-loom", "Fabric");
-            detectPlugin(validGameVersions, "org.quiltmc.loom", "Quilt");
-            detectPlugin(validGameVersions, "net.neoforged.gradle", "NeoForge");
-            detectPlugin(validGameVersions, "net.neoforged.gradle.userdev", "NeoForge");
+        // Detect Minecraft versions.
+        detectProperty(validGameVersions, "MC_VERSION");
+        detectProperty(validGameVersions, "minecraft_version");
+        detectProperty(validGameVersions, "mc_version");
+        detectProperty(validGameVersions, "mcVersion");
+        detectProperty(validGameVersions, "minecraftVersion");
 
-            // Detect Minecraft versions.
-            detectProperty(validGameVersions, "MC_VERSION");
-            detectProperty(validGameVersions, "minecraft_version");
-            detectProperty(validGameVersions, "mc_version");
-            detectProperty(validGameVersions, "mcVersion");
-            detectProperty(validGameVersions, "minecraftVersion");
-
-            // Detect Java versions.
-            detectJavaToolchainVersion(validGameVersions);
-        }
+        // Detect Java versions.
+        detectJavaToolchainVersion(validGameVersions);
     }
 
     /**
