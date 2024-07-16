@@ -70,6 +70,7 @@ public final class VersionDetector {
             detectPlugin(validGameVersions, "org.quiltmc.loom", "Quilt");
             detectPlugin(validGameVersions, "net.neoforged.gradle", "NeoForge");
             detectPlugin(validGameVersions, "net.neoforged.gradle.userdev", "NeoForge");
+            detectPlugin(validGameVersions, "net.neoforged.moddev", "NeoForge");
 
             // Detect Minecraft versions.
             detectProperty(validGameVersions, "MC_VERSION");
