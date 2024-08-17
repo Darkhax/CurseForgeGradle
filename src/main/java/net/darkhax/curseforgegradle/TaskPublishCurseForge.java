@@ -11,11 +11,13 @@ import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.RegularFile;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
+import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.TaskAction;
 
 import javax.annotation.Nullable;
+import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -27,7 +29,12 @@ import java.util.List;
  * A Gradle task that can publish multiple files to CurseForge. A project can define any number of these tasks, and any
  * given task can be responsible for publishing any number of files to any number of projects.
  */
-public class TaskPublishCurseForge extends DefaultTask {
+public abstract class TaskPublishCurseForge extends DefaultTask {
+
+    /**
+     * The display name of the project that defined this task.
+     */
+    private final String projectDisplayName = this.getProject().getDisplayName();
 
     /**
      * An internal logger instance used to print warnings, errors, and debug information. The logger name includes the
@@ -78,7 +85,7 @@ public class TaskPublishCurseForge extends DefaultTask {
      */
     public TaskPublishCurseForge() {
 
-        this.log = Logging.getLogger("CurseForgeGradle/" + this.getProject().getDisplayName() + "/" + this.getName());
+        this.log = Logging.getLogger("CurseForgeGradle/" + projectDisplayName + "/" + this.getName());
         this.versionDetector = new VersionDetector(this.getProject(), this.log);
 
         // Ensure publishing takes place after the build task has completed. This is required
@@ -96,6 +103,9 @@ public class TaskPublishCurseForge extends DefaultTask {
         return ImmutableList.copyOf(uploadArtifacts);
     }
 
+    @Inject
+    public abstract ObjectFactory getObjectFactory();
+
     /**
      * Creates a new main level artifact that the plugin will attempt to publish during the {@link #publish()} step.
      * This method requires the minimum amount of information to define an artifact. Further configuration including
@@ -109,7 +119,7 @@ public class TaskPublishCurseForge extends DefaultTask {
      */
     public UploadArtifact upload(Object projectId, Object toUpload) {
 
-        final UploadArtifact artifact = new UploadArtifact(toUpload, parseLong(projectId), getProject().getObjects(), this.log, null);
+        final UploadArtifact artifact = new UploadArtifact(toUpload, parseLong(projectId), getObjectFactory(), this.log, null);
         this.uploadArtifacts.add(artifact);
         return artifact;
     }
@@ -185,7 +195,7 @@ public class TaskPublishCurseForge extends DefaultTask {
         this.log.debug("Task configured to connect to {}", this.apiEndpoint);
 
         // Request game version data from the API. This is used to map version slugs to API version IDs.
-        this.validGameVersions = new GameVersions(parseString(this.apiEndpoint), this.getProject().getDisplayName(), this.getName());
+        this.validGameVersions = new GameVersions(parseString(this.apiEndpoint), projectDisplayName, this.getName());
         this.validGameVersions.refresh(parseString(this.apiToken));
 
         // Handle auto version detection.
