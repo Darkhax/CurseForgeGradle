@@ -1,5 +1,6 @@
 package net.darkhax.curseforgegradle.api.versions;
 
+import com.google.gson.JsonParseException;
 import net.darkhax.curseforgegradle.Constants;
 import net.darkhax.curseforgegradle.CurseForgeGradlePlugin;
 import org.gradle.api.GradleException;
@@ -88,17 +89,25 @@ public final class GameVersions {
         log.debug("Fetching game version types from {}.", versionTypesEndpoint);
         try (Reader versionReader = CurseForgeGradlePlugin.fetch(versionTypesEndpoint, apiToken)) {
 
-            final VersionType[] versionTypes = Constants.GSON.fromJson(versionReader, VersionType[].class);
+            final String response = CurseForgeGradlePlugin.readString(versionReader);
 
-            for (final VersionType type : versionTypes) {
+            try {
+                final VersionType[] versionTypes = Constants.GSON.fromJson(response, VersionType[].class);
 
-                // TODO this is hardcoded to Minecraft. A more generic solution is required.
-                if (type.getSlug().startsWith("minecraft") || type.getSlug().equals("java") || type.getSlug().equals("modloader") || type.getSlug().equals("environment")) {
+                for (final VersionType type : versionTypes) {
 
-                    this.validVersionTypes.add(type.getId());
+                    // TODO this is hardcoded to Minecraft. A more generic solution is required.
+                    if (type.getSlug().startsWith("minecraft") || type.getSlug().equals("java") || type.getSlug().equals("modloader") || type.getSlug().equals("environment")) {
+
+                        this.validVersionTypes.add(type.getId());
+                    }
+
+                    log.debug("Received game version type {} with id {}.", type.getName(), type.getId());
                 }
-
-                log.debug("Received game version type {} with id {}.", type.getName(), type.getId());
+            }
+            catch (JsonParseException jsonException) {
+                log.error("Unexpected response from CurseForge API! " + response);
+                throw new GradleException("Unexpected response from CurseForge API. Response '" + response + "'.", jsonException);
             }
         }
 

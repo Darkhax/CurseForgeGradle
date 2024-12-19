@@ -4,6 +4,7 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 
 import javax.annotation.Nullable;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -65,6 +66,17 @@ public class CurseForgeGradlePlugin implements Plugin<Project> {
         else {
 
             return new InputStreamReader(connection.getInputStream());
+        }
+    }
+
+    public static String readString(Reader read) throws IOException {
+        try (BufferedReader input = new BufferedReader(read)) {
+            String nextLine;
+            StringBuilder output = new StringBuilder();
+            while ((nextLine = input.readLine()) != null) {
+                output.append(nextLine);
+            }
+            return output.toString();
         }
     }
 }
