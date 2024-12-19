@@ -70,7 +70,7 @@ public abstract class TaskPublishCurseForge extends DefaultTask {
 
     /**
      * The API token used to publish files on your behalf. This token must have the correct project permissions for the
-     * files to be published. These tokens can be generated here: https://authors.curseforge.com/account/api-tokens
+     * files to be published. These tokens can be generated here: https://legacy.curseforge.com/account/api-tokens
      */
     public Object apiToken;
 
