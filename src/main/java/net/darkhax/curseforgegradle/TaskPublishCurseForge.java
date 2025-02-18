@@ -3,6 +3,7 @@ package net.darkhax.curseforgegradle;
 import groovy.lang.Closure;
 import com.google.common.collect.ImmutableList;
 import net.darkhax.curseforgegradle.api.versions.GameVersions;
+import net.darkhax.curseforgegradle.versionTypes.*;
 import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -22,8 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * A Gradle task that can publish multiple files to CurseForge. A project can define any number of these tasks, and any
@@ -61,6 +61,17 @@ public abstract class TaskPublishCurseForge extends DefaultTask {
      * to CurseForge during the {@link #publish()} step.
      */
     private final List<UploadArtifact> uploadArtifacts = new LinkedList<>();
+
+    /**
+     * The version type provider to use for this task. This is used to determine the valid version types for the game.
+     * By default {@link ModMinecraftVersionTypeProvider} is used which supports all .
+     */
+    private final Set<VersionTypeProvider> versionTypeProviders = new HashSet<>(ImmutableList.of(
+            new ModMinecraftVersionTypeProvider(),
+            new EnvironmentVersionTypeProvider(),
+            new JavaVersionTypeProvider(),
+            new ModloaderVersionTypeProvider()
+    ));
 
     /**
      * The game specific API endpoint. This is used to retrieve lists of valid versions for a game and to help files get
@@ -152,6 +163,23 @@ public abstract class TaskPublishCurseForge extends DefaultTask {
     }
 
     /**
+     * Add a version type provider to the task. This provider will be used to determine the valid version types for the
+     * game.
+     * @param providers The providers to add.
+     */
+    public void addVersionTypeProvider(VersionTypeProvider... providers) {
+        this.versionTypeProviders.addAll(Arrays.asList(providers));
+    }
+
+    /**
+     * Same as {@link #addVersionTypeProvider(VersionTypeProvider...)} but removes all existing providers first.
+     */
+    public void setVersionTypeProviders(VersionTypeProvider... providers) {
+        this.versionTypeProviders.clear();
+        this.addVersionTypeProvider(providers);
+    }
+
+    /**
      * This method is called when a gradle defined implementation of this task has been invoked. The project and the
      * task should already be configured at this point.
      */
@@ -170,9 +198,7 @@ public abstract class TaskPublishCurseForge extends DefaultTask {
             // The child files of an artifact will be uploaded after the parent artifact has been uploaded and the
             // upload response has been validated.
             this.publish();
-        }
-
-        else {
+        } else {
 
             this.log.warn("No upload artifacts were specified.");
         }
@@ -195,7 +221,12 @@ public abstract class TaskPublishCurseForge extends DefaultTask {
         this.log.debug("Task configured to connect to {}", this.apiEndpoint);
 
         // Request game version data from the API. This is used to map version slugs to API version IDs.
-        this.validGameVersions = new GameVersions(parseString(this.apiEndpoint), projectDisplayName, this.getName());
+        this.validGameVersions = new GameVersions(
+                parseString(this.apiEndpoint),
+                projectDisplayName,
+                this.getName(),
+                this.versionTypeProviders
+        );
         this.validGameVersions.refresh(parseString(this.apiToken));
 
         // Handle auto version detection.
@@ -251,9 +282,7 @@ public abstract class TaskPublishCurseForge extends DefaultTask {
         if (debugMode) {
 
             artifact.logUploadMetadata(endpoint);
-        }
-
-        else {
+        } else {
 
             artifact.beginUpload(endpoint, token);
         }
@@ -270,9 +299,7 @@ public abstract class TaskPublishCurseForge extends DefaultTask {
         if (obj instanceof Number) {
 
             return ((Number) obj).longValue();
-        }
-
-        else if (obj instanceof String) {
+        } else if (obj instanceof String) {
 
             return Long.parseLong((String) obj);
         }
@@ -295,9 +322,7 @@ public abstract class TaskPublishCurseForge extends DefaultTask {
             // closures that return a file instead of only supporting ones that provide a string
             try {
                 obj = ((Closure<?>) obj).call();
-            }
-
-            catch (Exception e) {
+            } catch (Exception e) {
 
                 throw new GradleException("Could not resolve closure as a string.", e);
             }
@@ -309,9 +334,7 @@ public abstract class TaskPublishCurseForge extends DefaultTask {
             // Providers that return a file instead of only supporting ones that provide a string
             try {
                 obj = ((Provider<?>) obj).get();
-            }
-
-            catch (Exception e) {
+            } catch (Exception e) {
 
                 throw new GradleException("Could not resolve Provider as a string.", e);
             }
@@ -325,9 +348,7 @@ public abstract class TaskPublishCurseForge extends DefaultTask {
 
             try {
                 return new String(Files.readAllBytes(((File) obj).toPath()), StandardCharsets.UTF_8);
-            }
-
-            catch (IOException e) {
+            } catch (IOException e) {
 
                 throw new GradleException("Could not parse File " + ((File) obj).getPath() + " as string.", e);
             }

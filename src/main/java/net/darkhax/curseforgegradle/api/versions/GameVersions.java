@@ -3,6 +3,7 @@ package net.darkhax.curseforgegradle.api.versions;
 import com.google.gson.JsonParseException;
 import net.darkhax.curseforgegradle.Constants;
 import net.darkhax.curseforgegradle.CurseForgeGradlePlugin;
+import net.darkhax.curseforgegradle.versionTypes.VersionTypeProvider;
 import org.gradle.api.GradleException;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
@@ -36,6 +37,11 @@ public final class GameVersions {
     private final String versionTypesEndpoint;
 
     /**
+     * A set of providers for version types.
+     */
+    private final Set<VersionTypeProvider> versionTypeProviders;
+
+    /**
      * A set of version IDs that are considered valid for this type of project.
      */
     private final Set<Long> validVersionTypes = new HashSet<>();
@@ -58,10 +64,10 @@ public final class GameVersions {
      * @param projectName The name of the project uploading a file. This is used for debug logging.
      * @param taskName    The name of the task uploading a file. This is used for debug logging.
      */
-    public GameVersions(String endpoint, String projectName, String taskName) {
-
+    public GameVersions(String endpoint, String projectName, String taskName, Set<VersionTypeProvider> versionTypeProviders) {
         this.versionsEndpoint = endpoint + "/api/game/versions";
         this.versionTypesEndpoint = endpoint + "/api/game/version-types";
+        this.versionTypeProviders = versionTypeProviders;
         this.log = Logging.getLogger("CurseForgeGradle/Versions/" + projectName + "/" + taskName);
     }
 
@@ -94,15 +100,8 @@ public final class GameVersions {
             try {
                 final VersionType[] versionTypes = Constants.GSON.fromJson(response, VersionType[].class);
 
-                for (final VersionType type : versionTypes) {
-
-                    // TODO this is hardcoded to Minecraft. A more generic solution is required.
-                    if (type.getSlug().startsWith("minecraft") || type.getSlug().equals("java") || type.getSlug().equals("modloader") || type.getSlug().equals("environment")) {
-
-                        this.validVersionTypes.add(type.getId());
-                    }
-
-                    log.debug("Received game version type {} with id {}.", type.getName(), type.getId());
+                for (VersionTypeProvider provider : versionTypeProviders) {
+                    this.validVersionTypes.addAll(provider.getValidVersionTypes(versionTypes));
                 }
             }
             catch (JsonParseException jsonException) {
