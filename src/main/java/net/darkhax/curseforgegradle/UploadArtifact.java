@@ -109,7 +109,7 @@ public class UploadArtifact {
      * When a sub file is created using {@link #withAdditionalFile(Object)} it will inherit the current changelog value.
      * This can be changed independently after creation.
      */
-    private Map<String, String> relationships = new HashMap<>();
+    private Map<String, RelationSpecifics> relationships = new HashMap<>();
 
     /**
      * An internal object that holds all project relationships for the artifact. This will be created from the values of
@@ -359,12 +359,14 @@ public class UploadArtifact {
      *
      * @param slug The slug of the project to define a relationship with.
      * @param type The type of relationship to define.
+     * @param id The exact id of the project.
      */
-    public void addRelation(Object slug, Object type) {
+    public void addRelation(Object slug, Object type, Object id) {
 
         final String slugString = TaskPublishCurseForge.parseString(slug);
-        final String existingRelation = relationships.get(slugString);
+        final RelationSpecifics existingRelation = relationships.get(slugString);
         final String typeString = TaskPublishCurseForge.parseString(type);
+        final String idString = TaskPublishCurseForge.parseString(id);
 
         if (!Constants.VALID_RELATION_TYPES.contains(typeString)) {
 
@@ -380,15 +382,26 @@ public class UploadArtifact {
             }
 
             else {
+                if (!typeString.equals(existingRelation.getType())) {
+                    this.log.warn("Changing relation type for project {} from {} to {}.", slugString, existingRelation.getType(), typeString);
+                    existingRelation.setType(typeString);
+                }
 
-                this.log.warn("Changing relation type for project {} from {} to {}.", slugString, existingRelation, typeString);
+                if (!idString.equals(existingRelation.getId())) {
+                    this.log.warn("Changing relation id for project {} from {} to {}.", slugString, existingRelation.getId(), idString);
+                    existingRelation.setId(idString);
+                }
             }
         }
 
         if (typeString != null) {
 
-            this.relationships.put(slugString, typeString);
+            this.relationships.put(slugString, new RelationSpecifics(typeString, idString));
         }
+    }
+
+    public void addRelation(Object slug, Object type) {
+        addRelation(slug, type, null);
     }
 
     /**
@@ -426,19 +439,19 @@ public class UploadArtifact {
         }
 
         // Make sure all file relationships are valid. The project slugs are not tested because it's not realistic to do that with the current API limitations.
-        for (Map.Entry<String, String> relation : this.relationships.entrySet()) {
+        for (Map.Entry<String, RelationSpecifics> entry : this.relationships.entrySet()) {
 
-            final String projectSlug = relation.getKey();
-            final String relationType = relation.getValue();
+            final String projectSlug = entry.getKey();
+            final RelationSpecifics relation = entry.getValue();
 
-            this.log.debug("File {} will have a {} relationship to project {}.", this.uploadFile.getName(), relationType, projectSlug);
+            this.log.debug("File {} will have a {} relationship to project {}.", this.uploadFile.getName(), relation.getType(), projectSlug);
 
-            if (!Constants.VALID_RELATION_TYPES.contains(relation.getValue())) {
+            if (!Constants.VALID_RELATION_TYPES.contains(relation.getType())) {
 
-                this.log.warn("The relation type {} to project {} for file {} is not recognized.", relationType, projectSlug, uploadFile.getName());
+                this.log.warn("The relation type {} to project {} for file {} is not recognized.", relation.getType(), projectSlug, uploadFile.getName());
             }
 
-            this.uploadRelations.addRelationship(projectSlug, relationType);
+            this.uploadRelations.addRelationship(projectSlug, relation.getType(), relation.getId());
         }
 
         // Resolve game versions from strings to IDs using the results from the CurseForge API.
