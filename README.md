@@ -51,7 +51,7 @@ task publishCurseForge(type: net.darkhax.curseforgegradle.TaskPublishCurseForge)
     // A project ID is required to tell CurseForge which project the uploaded
     // file belongs to. This is public on your project page and is not private
     // information.
-    projectId = findProperty('curseforge_project')
+    def projectId = findProperty('curseforge_project')
 
     // Tells CurseForgeGradle to publish the output of the jar task. This will
     // return a UploadArtifact object that can be used to further configure the
