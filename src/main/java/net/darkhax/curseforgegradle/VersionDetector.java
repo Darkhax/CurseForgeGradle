@@ -28,7 +28,8 @@ public final class VersionDetector {
             "fabric-loom", "Fabric",
             "org.quiltmc.loom", "Quilt",
             "net.neoforged.gradle", "NeoForge",
-            "net.neoforged.gradle.userdev", "NeoForge"
+            "net.neoforged.gradle.userdev", "NeoForge",
+            "net.neoforged.moddev", "NeoForge"
     );
 
     private static final Set<String> WELL_KNOWN_PROPERTIES = Sets.newHashSet(
