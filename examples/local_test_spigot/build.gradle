@@ -1,0 +1,39 @@
+plugins {
+    id 'java'
+    id ''
+}
+
+group = 'com.example'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+    maven {
+        name = "spigotmc-repo"
+        url = "https://hub.spigotmc.org/nexus/content/repositories/snapshots/"
+    }
+    maven {
+        name = "sonatype"
+        url = "https://oss.sonatype.org/content/groups/public/"
+    }
+}
+
+dependencies {
+    compileOnly("org.spigotmc:spigot-api:1.21.4-R0.1-SNAPSHOT")
+}
+
+// CurseForgeGradle
+task publishCurseForge(type: net.darkhax.curseforgegradle.TaskPublishCurseForge) {
+
+    apiToken = curseforgegradle_testtoken
+
+    // Switch to bukkit mc version provider
+    setVersionTypeProviders(new net.darkhax.curseforgegradle.versionTypes.BukkitMinecraftVersionTypeProvider())
+
+    // The main file to upload
+    def mainFile = upload(537663, jar)
+    mainFile.releaseType = 'beta'
+    mainFile.changelog = 'This is a test file. Please ignore it. The mod does nothing.'
+    mainFile.changelogType = 'markdown'
+    mainFile.addMinecraftVersion('1.21')
+}

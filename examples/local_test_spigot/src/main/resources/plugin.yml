@@ -1,0 +1,6 @@
+name: exampleplugin
+version: '1.0-SNAPSHOT'
+main: com.example.exampleplugin.ExamplePlugin
+api-version: '1.21'
+authors: [ Julian Vennen ]
+description: An example plugin that does nothing
