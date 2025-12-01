@@ -3,7 +3,9 @@ package net.darkhax.curseforgegradle;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import net.darkhax.curseforgegradle.api.versions.GameVersions;
+import net.neoforged.moddevgradle.dsl.NeoForgeExtension;
 import org.apache.groovy.util.Maps;
+import org.gradle.api.InvalidUserCodeException;
 import org.gradle.api.Project;
 import org.gradle.api.logging.Logger;
 
@@ -85,6 +87,16 @@ public final class VersionDetector {
             project.getPlugins().withId(pluginName, plugin -> {
                 detectedPluginVersions.put(pluginName, version);
             });
+        });
+
+        project.getPlugins().withId("net.neoforged.moddev", plugin -> {
+            try {
+                project.getExtensions().getByType(NeoForgeExtension.class).getNeoFormVersion();
+            } catch (InvalidUserCodeException e) {
+                // This error is thrown when the user hasn't configured neoform, which means they are using the
+                // neoforge mod loader and not just the moddev gradle vanilla setup.
+                detectedPluginVersions.put("net.neoforged.moddev", "NeoForge");
+            }
         });
 
         //This operates as a lazy detection mechanism.
