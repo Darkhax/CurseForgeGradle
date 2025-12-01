@@ -15,6 +15,12 @@ targetCompatibility = 1.8
 repositories {
 
     mavenCentral()
+
+    maven {
+        name = "NeoForge"
+        url = "https://maven.neoforged.net/releases"
+    }
+    gradlePluginPortal()
 }
 
 dependencies {
@@ -25,6 +31,7 @@ dependencies {
     implementation group: 'org.apache.httpcomponents', name: 'httpmime', version: '4.5.13'
     implementation group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.13'
     implementation group: 'com.google.guava', name: 'guava', version: '31.0.1-jre'
+    implementation group: 'net.neoforged', name: 'moddev-gradle', version: '2.0.120'
 }
 
 gradlePlugin {
