@@ -1,7 +1,5 @@
 package net.darkhax.curseforgegradle;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Sets;
 import net.darkhax.curseforgegradle.api.versions.GameVersions;
 import org.apache.groovy.util.Maps;
 import org.gradle.api.Project;
@@ -31,7 +29,7 @@ public final class VersionDetector {
             "net.neoforged.gradle.userdev", "NeoForge"
     );
 
-    private static final Set<String> WELL_KNOWN_PROPERTIES = Sets.newHashSet(
+    private static final Set<String> WELL_KNOWN_PROPERTIES = Set.of(
             "MC_VERSION",
             "minecraft_version",
             "mc_version",
@@ -151,8 +149,7 @@ public final class VersionDetector {
      * @return An immutable collection of all the detected game versions.
      */
     public Collection<String> getDetectedVersions() {
-
-        return ImmutableList.copyOf(this.detectedVersions);
+        return Collections.unmodifiableCollection(this.detectedVersions);
     }
 
     /**

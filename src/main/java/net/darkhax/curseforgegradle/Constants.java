@@ -1,6 +1,5 @@
 package net.darkhax.curseforgegradle;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -55,7 +54,7 @@ public class Constants {
     /**
      * An immutable set of all relation types that are known to be valid. This is often used to validate user input.
      */
-    public static final Set<String> VALID_RELATION_TYPES = ImmutableSet.of(RELATION_EMBEDDED, RELATION_INCOMPATIBLE, RELATION_OPTIONAL, RELATION_REQUIRED, RELATION_TOOL);
+    public static final Set<String> VALID_RELATION_TYPES = Set.of(RELATION_EMBEDDED, RELATION_INCOMPATIBLE, RELATION_OPTIONAL, RELATION_REQUIRED, RELATION_TOOL);
 
     /**
      * The value for a plain text changelog. No special formatting is applied when this is used.
@@ -75,7 +74,7 @@ public class Constants {
     /**
      * An immutable set of all changelog types known to be valid. This is often used to validate user input.
      */
-    public static final Set<String> VALID_CHANGELOG_TYPES = ImmutableSet.of(CHANGELOG_TEXT, CHANGELOG_HTML, CHANGELOG_MARKDOWN);
+    public static final Set<String> VALID_CHANGELOG_TYPES = Set.of(CHANGELOG_TEXT, CHANGELOG_HTML, CHANGELOG_MARKDOWN);
 
     /**
      * The value for an alpha release. These files are often hidden from certain API responses and user views.
@@ -95,5 +94,5 @@ public class Constants {
     /**
      * An immutable set of all release types known to be valid. This is often used to validate user input.
      */
-    public static final Set<String> VALID_RELEASE_TYPES = ImmutableSet.of(RELEASE_TYPE_ALPHA, RELEASE_TYPE_BETA, RELEASE_TYPE_RELEASE);
+    public static final Set<String> VALID_RELEASE_TYPES = Set.of(RELEASE_TYPE_ALPHA, RELEASE_TYPE_BETA, RELEASE_TYPE_RELEASE);
 }

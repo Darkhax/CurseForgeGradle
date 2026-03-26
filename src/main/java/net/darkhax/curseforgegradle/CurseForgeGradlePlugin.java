@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.zip.GZIPInputStream;
 
@@ -32,9 +34,9 @@ public class CurseForgeGradlePlugin implements Plugin<Project> {
      * @return The HTTP reader.
      * @throws IOException This exception will be raised if the connection was rejected or could not be established.
      */
-    public static Reader fetch(String urlString, @Nullable String token) throws IOException {
+    public static Reader fetch(String urlString, @Nullable String token) throws IOException, URISyntaxException {
 
-        final URL url = new URL(urlString);
+        final URL url = new URI(urlString).toURL();
 
         final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.addRequestProperty("User-Agent", "CurseForgeGradle");

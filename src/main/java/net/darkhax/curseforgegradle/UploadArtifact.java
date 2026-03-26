@@ -1,19 +1,10 @@
 package net.darkhax.curseforgegradle;
 
-import com.google.common.collect.ImmutableList;
 import net.darkhax.curseforgegradle.api.metadata.Metadata;
 import net.darkhax.curseforgegradle.api.metadata.ProjectRelations;
 import net.darkhax.curseforgegradle.api.upload.ResponseError;
 import net.darkhax.curseforgegradle.api.upload.ResponseSuccessful;
 import net.darkhax.curseforgegradle.api.versions.GameVersions;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.config.CookieSpecs;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.mime.MultipartEntityBuilder;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.FileCollection;
@@ -24,18 +15,30 @@ import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.Nested;
 
 import javax.annotation.Nullable;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringJoiner;
+import java.util.UUID;
 
 /**
  * This class defines the script-time representation of an artifact being published to CurseForge. Users will directly
@@ -473,63 +476,68 @@ public class UploadArtifact {
         this.log.lifecycle("Game versions: {}", prettyVersions);
     }
 
-    /**
-     * Triggers the post request to the API that will begin the upload of the artifact. This is intended for internal
-     * use.
-     *
-     * @param endpoint The endpoint to upload the file to.
-     * @param token    The CurseForge API token used to authenticate the upload.
-     */
     public final void beginUpload(String endpoint, String token) {
-
-        final HttpClient webClient = HttpClientBuilder.create().setDefaultRequestConfig(RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build()).setUserAgent("CurseForgeGradle").build();
-
-        final MultipartEntityBuilder requestEntity = MultipartEntityBuilder.create();
-        requestEntity.addTextBody("metadata", Constants.GSON.toJson(this.createMetadata()), ContentType.APPLICATION_JSON);
-        requestEntity.addBinaryBody("file", this.uploadFile);
-
-        final HttpPost request = new HttpPost(getUploadTarget(endpoint));
-        request.addHeader("X-Api-Token", token);
-        request.setEntity(requestEntity.build());
-
+        final HttpClient client = HttpClient.newHttpClient();
+        final String boundary = "----JavaBoundary" + UUID.randomUUID();
+        if (this.uploadFile == null) {
+            throw new GradleException("Can not upload a null file!");
+        }
         try {
-
             this.log.debug("Initiating upload of {}.", this.uploadFile.getName());
-            final HttpResponse response = webClient.execute(request);
+            final byte[] fileBytes = Files.readAllBytes(this.uploadFile.toPath());
+            final String metadataJson = Constants.GSON.toJson(this.createMetadata());
+            final ByteArrayOutputStream bodyStream = new ByteArrayOutputStream();
+            final PrintWriter writer = new PrintWriter(new OutputStreamWriter(bodyStream, StandardCharsets.UTF_8), true);
 
-            // Handles when an upload was successful.
-            if (response.getStatusLine().getStatusCode() == 200) {
+            // Metadata
+            writer.append("--").append(boundary).append("\r\n");
+            writer.append("Content-Disposition: form-data; name=\"metadata\"\r\n");
+            writer.append("Content-Type: application/json\r\n\r\n");
+            writer.append(metadataJson).append("\r\n");
 
-                final InputStreamReader reader = new InputStreamReader(response.getEntity().getContent());
-                this.curseFileId = Constants.GSON.fromJson(reader, ResponseSuccessful.class).getId();
-                reader.close();
+            // File part
+            writer.append("--").append(boundary).append("\r\n");
+            writer.append("Content-Disposition: form-data; name=\"file\"; filename=\"").append(this.uploadFile.getName()).append("\"\r\n");
+            writer.append("Content-Type: application/octet-stream\r\n\r\n");
+            writer.flush();
+            bodyStream.write(fileBytes);
+            bodyStream.write("\r\n".getBytes());
+
+            // End boundary
+            writer.append("--").append(boundary).append("--").append("\r\n");
+            writer.close();
+
+            final HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(getUploadTarget(endpoint)))
+                    .header("X-Api-Token", token)
+                    .header("User-Agent", "CurseForgeGradle (DarkhaxDev)")
+                    .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+                    .POST(HttpRequest.BodyPublishers.ofByteArray(bodyStream.toByteArray()))
+                    .build();
+            final HttpResponse<InputStream> response = client.send(request, HttpResponse.BodyHandlers.ofInputStream());
+            final int statusCode = response.statusCode();
+            if (statusCode == 200) {
+                try (InputStreamReader reader = new InputStreamReader(response.body())) {
+                    this.curseFileId = Constants.GSON.fromJson(reader, ResponseSuccessful.class).getId();
+                }
                 this.log.debug("Artifact {} uploaded with ID {}.", this.uploadFile.getName(), this.curseFileId);
             }
-
-            // Handles when the upload was rejected by CurseForge.
             else {
-
-                int errorCode = response.getStatusLine().getStatusCode();
-                String message = response.getStatusLine().getReasonPhrase();
-
-                // Sometimes CurseForge will give a custom error message so this is handled here.
-                if (response.getFirstHeader("content-type").getValue().contains("json")) {
-
-                    final InputStreamReader reader = new InputStreamReader(response.getEntity().getContent());
-                    ResponseError error = Constants.GSON.fromJson(reader, ResponseError.class);
-                    reader.close();
-
-                    errorCode = error.getCode();
-                    message = error.getMessage();
+                int errorCode = statusCode;
+                String message = "";
+                String contentType = response.headers().firstValue("content-type").orElse("");
+                if (contentType.contains("json")) {
+                    try (InputStreamReader reader = new InputStreamReader(response.body())) {
+                        ResponseError error = Constants.GSON.fromJson(reader, ResponseError.class);
+                        errorCode = error.getCode();
+                        message = error.getMessage();
+                    }
                 }
-
                 this.log.error("Curse rejected artifact {} with error code '{}' and message '{}'.", this.uploadFile.getName(), errorCode, message);
                 throw new GradleException("Failed to upload artifact " + this.uploadFile.getName() + ". Error code '" + errorCode + "', message '" + message + "'.");
             }
         }
-
-        catch (IOException e) {
-
+        catch (IOException | InterruptedException e) {
             this.log.error("Failed to upload artifact {}!", this.uploadFile.getName());
             throw new GradleException("Failed to upload artifact!", e);
         }
@@ -542,7 +550,7 @@ public class UploadArtifact {
      */
     @Nested
     public final Collection<UploadArtifact> getAdditionalArtifacts() {
-        return ImmutableList.copyOf(this.additionalFiles);
+        return Collections.unmodifiableCollection(this.additionalFiles);
     }
 
     /**

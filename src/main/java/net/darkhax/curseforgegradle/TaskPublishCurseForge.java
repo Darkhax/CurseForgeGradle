@@ -1,7 +1,6 @@
 package net.darkhax.curseforgegradle;
 
 import groovy.lang.Closure;
-import com.google.common.collect.ImmutableList;
 import net.darkhax.curseforgegradle.api.versions.GameVersions;
 import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
@@ -22,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -100,7 +100,7 @@ public abstract class TaskPublishCurseForge extends DefaultTask {
 
     @Nested
     public List<UploadArtifact> getUploadArtifacts() {
-        return ImmutableList.copyOf(uploadArtifacts);
+        return Collections.unmodifiableList(this.uploadArtifacts);
     }
 
     @Inject

@@ -9,6 +9,7 @@ import org.gradle.api.logging.Logging;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -111,8 +112,7 @@ public final class GameVersions {
             }
         }
 
-        catch (IOException e) {
-
+        catch (IOException | URISyntaxException e) {
             log.error("Failed to fetch game version types!", e);
             throw new GradleException("Failed to fetch game versions!", e);
         }
@@ -162,7 +162,7 @@ public final class GameVersions {
             }
         }
 
-        catch (IOException e) {
+        catch (IOException | URISyntaxException e) {
 
             log.error("Failed to fetch game versions!", e);
             throw new GradleException("Failed to fetch game versions!", e);
@@ -170,8 +170,8 @@ public final class GameVersions {
     }
 
     /**
-     * Gets a Version by it's name or slug. The version name takes priority over the version slug when matching. Matches
-     * made by this method are case sensitive!
+     * Gets a Version by its name or slug. The version name takes priority over the version slug when matching. Matches
+     * made by this method are case-sensitive!
      *
      * @param versionString The version to lookup.
      * @return The game version that was found. A null value indicates that the version is likely invalid.
