@@ -2,6 +2,7 @@ package net.darkhax.curseforgegradle.api.metadata;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -25,9 +26,9 @@ public final class ProjectRelations {
      * @param type The type of relation to add. See {@link net.darkhax.curseforgegradle.Constants#VALID_RELATION_TYPES}
      *             for types that are known to work.
      */
-    public void addRelationship(String slug, String type) {
+    public void addRelationship(String slug, String type, @Nullable String id) {
 
-        this.projectRelations.add(new Relation(slug, type));
+        this.projectRelations.add(new Relation(slug, type, id));
     }
 
     /**
