@@ -447,6 +447,15 @@ public class UploadArtifact {
 
         // Resolve game versions from strings to IDs using the results from the CurseForge API.
         this.uploadVersions = this.gameVersions;
+
+        if (this.isMinecraftMod() && (!this.uploadVersions.contains("Client") && !this.uploadVersions.contains("Server"))) {
+            throw new GradleException("Minecraft mods must define an environment. This can be Client, Server, or both of them.");
+        }
+    }
+
+    private boolean isMinecraftMod() {
+        final Set<String> mcLoaders = Set.of("Fabric", "Forge", "NeoForge", "Quilt");
+        return this.uploadVersions != null && !Collections.disjoint(mcLoaders, this.uploadVersions);
     }
 
     /**
