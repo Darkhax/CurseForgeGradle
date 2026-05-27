@@ -1,0 +1,13 @@
+{
+  "itemGroup.cfgexample": "Example Mod Tab",
+  "block.cfgexample.example_block": "Example Block",
+  "item.cfgexample.example_item": "Example Item",
+
+  "cfgexample.configuration.title": "CFG_Example Configs",
+  "cfgexample.configuration.section.cfgexample.common.toml": "CFG_Example Configs",
+  "cfgexample.configuration.section.cfgexample.common.toml.title": "CFG_Example Configs",
+  "cfgexample.configuration.items": "Item List",
+  "cfgexample.configuration.logDirtBlock": "Log Dirt Block",
+  "cfgexample.configuration.magicNumberIntroduction": "Magic Number Text",
+  "cfgexample.configuration.magicNumber": "Magic Number"
+}

@@ -1,0 +1,5 @@
+- This is an example changelog file.
+- This example project will use this changelog file for the sources changelog file.
+- Using files is completely optional. I prefer strings personally.
+- You could also use `file('your/changelog/here').getText('UTF-8')`
+- Or just use `file('your/changelog/here').text`
