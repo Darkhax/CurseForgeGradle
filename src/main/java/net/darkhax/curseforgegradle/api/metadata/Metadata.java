@@ -48,8 +48,8 @@ public final class Metadata {
      * be null.
      */
     @Expose
-    @SerializedName("gameVersions")
-    public Set<Long> gameVersions = new HashSet<>();
+    @SerializedName("gameVersionNames")
+    public Set<String> gameVersions = new HashSet<>();
 
     /**
      * The release type. REQUIRED

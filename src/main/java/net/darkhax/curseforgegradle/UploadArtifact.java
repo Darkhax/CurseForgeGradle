@@ -4,7 +4,6 @@ import net.darkhax.curseforgegradle.api.metadata.Metadata;
 import net.darkhax.curseforgegradle.api.metadata.ProjectRelations;
 import net.darkhax.curseforgegradle.api.upload.ResponseError;
 import net.darkhax.curseforgegradle.api.upload.ResponseSuccessful;
-import net.darkhax.curseforgegradle.api.versions.GameVersions;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.FileCollection;
@@ -72,13 +71,13 @@ public class UploadArtifact {
     /**
      * An internal reference to the artifact being uploaded. This reference is held as an object to account for the
      * various ways files can be represented in a Gradle project. This will be resolved to a NIO File reference during
-     * the {@link #prepareForUpload(GameVersions)} step. The result of which is held by {@link #uploadFile}.
+     * the {@link #prepareForUpload()} step. The result of which is held by {@link #uploadFile}.
      */
     private final FileCollection artifact;
 
     /**
      * An internal reference to the upload artifact as a NIO File. This is null until the
-     * {@link #prepareForUpload(GameVersions)} step has happened.
+     * {@link #prepareForUpload()} step has happened.
      */
     @Nullable
     private File uploadFile = null;
@@ -94,10 +93,10 @@ public class UploadArtifact {
     /**
      * An internal set of the CurseForge game version tags applicable for this file. These IDs are not guaranteed to be
      * consistent across uploads, so they must be resolved using a separate API call. This set is resolved using values
-     * from {@link #gameVersions} during {@link #prepareForUpload(GameVersions)}.
+     * from {@link #gameVersions} during {@link #prepareForUpload()}.
      */
     @Nullable
-    private Set<Long> uploadVersions;
+    private Set<String> uploadVersions;
 
     /**
      * An internal list of additional files that will be uploaded as children to this artifact when this artifact is
@@ -116,7 +115,7 @@ public class UploadArtifact {
 
     /**
      * An internal object that holds all project relationships for the artifact. This will be created from the values of
-     * {@link #relationships} during the {@link #prepareForUpload(GameVersions)} step.
+     * {@link #relationships} during the {@link #prepareForUpload()} step.
      */
     private final ProjectRelations uploadRelations = new ProjectRelations();
 
@@ -397,10 +396,8 @@ public class UploadArtifact {
     /**
      * Prepares the artifact for being uploaded. This will resolve some configured properties into a format consumable
      * by the API. This is intended for internal use.
-     *
-     * @param validGameVersions The valid game version data from the API.
      */
-    public final void prepareForUpload(GameVersions validGameVersions) {
+    public final void prepareForUpload() {
 
         this.uploadFile = this.artifact.getSingleFile();
 
@@ -445,7 +442,7 @@ public class UploadArtifact {
         }
 
         // Resolve game versions from strings to IDs using the results from the CurseForge API.
-        this.uploadVersions = validGameVersions.resolveVersions(this.gameVersions);
+        this.uploadVersions = this.gameVersions;
     }
 
     /**

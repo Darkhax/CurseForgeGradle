@@ -1,6 +1,5 @@
 package net.darkhax.curseforgegradle;
 
-import net.darkhax.curseforgegradle.api.versions.GameVersions;
 import org.apache.groovy.util.Maps;
 import org.gradle.api.Project;
 import org.gradle.api.logging.Logger;
@@ -117,26 +116,20 @@ public final class VersionDetector {
 
     /**
      * Initiates the detection of game versions. If {@link #isEnabled} is false this will not run.
-     *
-     * @param validGameVersions Valid game versions for the current game.
      */
-    public void detectVersions(GameVersions validGameVersions) {
+    public void detectVersions() {
 
         if (isEnabled) {
 
             // Minecraft
 
             // Detect ModLoader versions.
-            detectedPluginVersions.forEach((pluginName, version) -> {
-                if (addDetectedChecked(validGameVersions, version)) {
-                    this.log.debug("Detected plugin '{}'. Automatically applying version '{}'.", pluginName, version);
-                }
-            });
+            detectedPluginVersions.forEach((pluginName, version) -> this.log.debug("Detected plugin '{}'. Automatically applying version '{}'.", pluginName, version));
 
             // Detect properties (Which includes the java version)
             detectedProperties.forEach((propertyName, provider) -> {
                 final String propertyValue = provider.get();
-                if (!propertyValue.isEmpty() && addDetectedChecked(validGameVersions, propertyValue)) {
+                if (!propertyValue.isEmpty()) {
                     this.log.debug("Detected property '{}'. Automatically applying version '{}'.", propertyName, propertyValue);
                 }
             });
@@ -150,22 +143,5 @@ public final class VersionDetector {
      */
     public Collection<String> getDetectedVersions() {
         return Collections.unmodifiableCollection(this.detectedVersions);
-    }
-
-    /**
-     * Adds a version as detected if it is a valid version for the current game.
-     *
-     * @param validGameVersions Valid game versions for the current game.
-     * @param version           Version to add as detected.
-     *
-     * @return {@code true} if the game version was valid for the current game and was successfully added.
-     */
-    private boolean addDetectedChecked(GameVersions validGameVersions, String version) {
-
-        if (validGameVersions.getVersion(version) != null) {
-
-            return this.detectedVersions.add(version);
-        }
-        return false;
     }
 }

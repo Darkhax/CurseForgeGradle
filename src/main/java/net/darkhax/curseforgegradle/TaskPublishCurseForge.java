@@ -1,7 +1,6 @@
 package net.darkhax.curseforgegradle;
 
 import groovy.lang.Closure;
-import net.darkhax.curseforgegradle.api.versions.GameVersions;
 import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -41,13 +40,6 @@ public abstract class TaskPublishCurseForge extends DefaultTask {
      * name of the project that defined this task and the name of the task.
      */
     private final Logger log;
-
-    /**
-     * An internal object that fetches and holds the valid game versions for the current game. This will be null until
-     * the {@link #initialize()} step has occurred.
-     */
-    @Nullable
-    private GameVersions validGameVersions;
 
     /**
      * Handles the automatic discovery of game version tags from variables in the Gradle environment. If this is not
@@ -194,14 +186,10 @@ public abstract class TaskPublishCurseForge extends DefaultTask {
 
         this.log.debug("Task configured to connect to {}", this.apiEndpoint);
 
-        // Request game version data from the API. This is used to map version slugs to API version IDs.
-        this.validGameVersions = new GameVersions(parseString(this.apiEndpoint), projectDisplayName, this.getName());
-        this.validGameVersions.refresh(parseString(this.apiToken));
-
         // Handle auto version detection.
         if (this.versionDetector.isEnabled) {
 
-            this.versionDetector.detectVersions(this.validGameVersions);
+            this.versionDetector.detectVersions();
 
             for (String detectedVersion : this.versionDetector.getDetectedVersions()) {
 
@@ -247,7 +235,7 @@ public abstract class TaskPublishCurseForge extends DefaultTask {
      */
     private void uploadArtifact(UploadArtifact artifact, String endpoint, String token) {
 
-        artifact.prepareForUpload(this.validGameVersions);
+        artifact.prepareForUpload();
         if (debugMode) {
 
             artifact.logUploadMetadata(endpoint);
