@@ -58,7 +58,7 @@ public abstract class TaskPublishCurseForge extends DefaultTask {
      * The game specific API endpoint. This is used to retrieve lists of valid versions for a game and to help files get
      * uploaded to the right game.
      */
-    public Object apiEndpoint = "https://minecraft.curseforge.com";
+    public Object apiEndpoint = "https://legacy.curseforge.com";
 
     /**
      * The API token used to publish files on your behalf. This token must have the correct project permissions for the
