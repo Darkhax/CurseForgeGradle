@@ -397,7 +397,7 @@ public class UploadArtifact {
      * Prepares the artifact for being uploaded. This will resolve some configured properties into a format consumable
      * by the API. This is intended for internal use.
      */
-    public final void prepareForUpload() {
+    public final void prepareForUpload(VersionDetector versionDetector) {
 
         this.uploadFile = this.artifact.getSingleFile();
 
@@ -445,17 +445,23 @@ public class UploadArtifact {
             throw new GradleException("At least one game version is required to upload a file to CurseForge. You have not defined any!");
         }
 
+        if (this.isMinecraftMod() && (!this.gameVersions.contains("Client") && !this.gameVersions.contains("Server"))) {
+            if (versionDetector.isEnabled) {
+                gameVersions.add("Client");
+                gameVersions.add("Server");
+            }
+            else {
+                throw new GradleException("Minecraft mods must define an environment. This can be Client, Server, or both of them.");
+            }
+        }
+
         // Resolve game versions from strings to IDs using the results from the CurseForge API.
         this.uploadVersions = this.gameVersions;
-
-        if (this.isMinecraftMod() && (!this.uploadVersions.contains("Client") && !this.uploadVersions.contains("Server"))) {
-            throw new GradleException("Minecraft mods must define an environment. This can be Client, Server, or both of them.");
-        }
     }
 
     private boolean isMinecraftMod() {
         final Set<String> mcLoaders = Set.of("Fabric", "Forge", "NeoForge", "Quilt");
-        return this.uploadVersions != null && !Collections.disjoint(mcLoaders, this.uploadVersions);
+        return this.gameVersions != null && !Collections.disjoint(mcLoaders, this.gameVersions);
     }
 
     /**

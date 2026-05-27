@@ -235,7 +235,7 @@ public abstract class TaskPublishCurseForge extends DefaultTask {
      */
     private void uploadArtifact(UploadArtifact artifact, String endpoint, String token) {
 
-        artifact.prepareForUpload();
+        artifact.prepareForUpload(this.versionDetector);
         if (debugMode) {
 
             artifact.logUploadMetadata(endpoint);
