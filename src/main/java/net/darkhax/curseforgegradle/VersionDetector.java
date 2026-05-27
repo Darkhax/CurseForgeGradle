@@ -3,13 +3,12 @@ package net.darkhax.curseforgegradle;
 import org.apache.groovy.util.Maps;
 import org.gradle.api.Project;
 import org.gradle.api.logging.Logger;
-
-import java.util.*;
-
 import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.jvm.toolchain.JavaLanguageVersion;
+
+import java.util.*;
 
 /**
  * This class is responsible for detecting versions from properties in the build environment. Each task will have one
@@ -18,7 +17,8 @@ import org.gradle.jvm.toolchain.JavaLanguageVersion;
 public final class VersionDetector {
 
     /**
-     * A map of well known plugins and the versions they are associated with. This is used to automatically detect them.
+     * A map of well known plugins and the versions they are associated with. This is used to automatically detect
+     * them.
      */
     private static final Map<String, String> WELL_KNOWN_PLUGINS = Maps.of(
             "net.minecraftforge.gradle", "Forge",
@@ -59,8 +59,8 @@ public final class VersionDetector {
     private final Map<String, String> detectedPluginVersions = new HashMap<>();
 
     /**
-     * A set of detected properties. This detection is run lazily and when the task that owns this detector
-     * initializes during task execution is it queried to register versions.
+     * A set of detected properties. This detection is run lazily and when the task that owns this detector initializes
+     * during task execution is it queried to register versions.
      */
     private final Map<String, Provider<String>> detectedProperties = new HashMap<>();
 
@@ -104,13 +104,13 @@ public final class VersionDetector {
         //Now we detect the java version from the java toolchain.
         JavaPluginExtension extension = project.getExtensions().findByType(JavaPluginExtension.class);
 
-        if (extension !=  null) {
+        if (extension != null) {
             //We use a lazy resolve here as the java toolchain is not always available.
             Property<JavaLanguageVersion> languageVersion = extension.getToolchain().getLanguageVersion();
             detectedProperties.put("JavaVersion", languageVersion
-                            .map(JavaLanguageVersion::asInt)
-                            .filter(version -> version > 0)
-                            .map(version -> "Java " + version).orElse(""));
+                    .map(JavaLanguageVersion::asInt)
+                    .filter(version -> version > 0)
+                    .map(version -> "Java " + version).orElse(""));
         }
     }
 
@@ -124,12 +124,16 @@ public final class VersionDetector {
             // Minecraft
 
             // Detect ModLoader versions.
-            detectedPluginVersions.forEach((pluginName, version) -> this.log.debug("Detected plugin '{}'. Automatically applying version '{}'.", pluginName, version));
+            detectedPluginVersions.forEach((pluginName, version) -> {
+                this.detectedVersions.add(version);
+                this.log.debug("Detected plugin '{}'. Automatically applying version '{}'.", pluginName, version);
+            });
 
             // Detect properties (Which includes the java version)
             detectedProperties.forEach((propertyName, provider) -> {
                 final String propertyValue = provider.get();
                 if (!propertyValue.isEmpty()) {
+                    this.detectedVersions.add(propertyValue);
                     this.log.debug("Detected property '{}'. Automatically applying version '{}'.", propertyName, propertyValue);
                 }
             });

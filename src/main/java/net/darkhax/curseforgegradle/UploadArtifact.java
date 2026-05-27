@@ -441,6 +441,10 @@ public class UploadArtifact {
             this.uploadRelations.addRelationship(projectSlug, relationType);
         }
 
+        if (this.gameVersions.isEmpty()) {
+            throw new GradleException("At least one game version is required to upload a file to CurseForge. You have not defined any!");
+        }
+
         // Resolve game versions from strings to IDs using the results from the CurseForge API.
         this.uploadVersions = this.gameVersions;
     }
